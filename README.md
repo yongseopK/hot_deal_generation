@@ -1,0 +1,1 @@
+# hot_deal_generation
