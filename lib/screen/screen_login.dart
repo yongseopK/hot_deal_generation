@@ -171,6 +171,9 @@ class _AuthenticationState extends State<Authentication> {
                             backgroundColor: Colors.red,
                             textColor: Colors.white,
                           );
+                          setState(() {
+                            showSpinner = false;
+                          });
                         }
                       }
                     },

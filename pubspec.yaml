@@ -47,6 +47,7 @@ dependencies:
   flutter_chat_bubble:
   image_picker:
   firebase_storage:
+  dotted_border:
 
 
 dev_dependencies:

@@ -1,12 +1,39 @@
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/screen/screen_add_post.dart';
 import 'package:hot_deal_generation/screen/screen_post_detail.dart';
 
-class CommunityScreen extends StatelessWidget {
+class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
+
+  @override
+  State<CommunityScreen> createState() => _CommunityScreenState();
+}
+
+class _CommunityScreenState extends State<CommunityScreen> {
+  final _authentication = FirebaseAuth.instance;
+  User? loggedUser;
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentUser();
+  }
+
+  void getCurrentUser() {
+    try {
+      final user = _authentication.currentUser;
+      if (user != null) {
+        loggedUser = user;
+        print(loggedUser!.email);
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,18 +76,20 @@ class CommunityScreen extends StatelessWidget {
             },
           ),
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AddPost(),
-              ),
-            );
-          },
-          backgroundColor: Colors.black,
-          child: const Icon(Icons.add), // FAB에 아이콘 추가
-        ),
+        floatingActionButton: loggedUser != null
+            ? FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddPost(),
+                    ),
+                  );
+                },
+                backgroundColor: Colors.black,
+                child: const Icon(Icons.add), // FAB에 아이콘 추가
+              )
+            : null,
       ),
     );
   }
