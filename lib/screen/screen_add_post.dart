@@ -71,7 +71,7 @@ class _AddPostState extends State<AddPost> {
 
   bool isToastVisible = false; // Toast 메시지가 표시 중인지 나타내는 상태 변수
 
-  void _addPost() async {
+  Future<void> _addPost() async {
     final user = FirebaseAuth.instance.currentUser;
     final userData = await FirebaseFirestore.instance
         .collection('user')
@@ -86,21 +86,41 @@ class _AddPostState extends State<AddPost> {
       imageUrls.add(imageUrl);
     }
 
-    // 이미지 업로드가 완료된 후에만 Toast 메시지를 표시
-    if (imageUrls.isNotEmpty && !isToastVisible) {
-      showToastMessage("게시물 작성이 완료되었습니다.");
-      isToastVisible = true;
-
-      Navigator.of(context).pop();
-    }
+    // 가장 큰 postNum 값을 가져와서 1을 더한 후 새로운 문서에 부여
+    int latestPostNum = await _getLatestPostNum();
+    int newPostNum = latestPostNum + 1;
 
     // Firestore에 게시물 데이터 추가
-    FirebaseFirestore.instance.collection('BulletinBoard').add({
+    await FirebaseFirestore.instance.collection('BulletinBoard').add({
+      'postNum': newPostNum,
       'title': postTitle,
       'text': postText,
       'userName': userData.data()!['userName'],
       'imageUrls': imageUrls,
     });
+
+    // 이미지 업로드가 완료된 후에만 Toast 메시지를 표시
+    if (imageUrls.isNotEmpty && !isToastVisible) {
+      showToastMessage("게시물 작성이 완료되었습니다.");
+      isToastVisible = true;
+    }
+
+    Navigator.of(context).pop();
+  }
+
+  Future<int> _getLatestPostNum() async {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('BulletinBoard')
+        .orderBy('postNum', descending: true)
+        .limit(1)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      int latestPostNum = querySnapshot.docs.first['postNum'];
+      return latestPostNum;
+    } else {
+      return 0; // 컬렉션에 문서가 없을 경우 0 반환
+    }
   }
 
   void showToastMessage(String message) {
