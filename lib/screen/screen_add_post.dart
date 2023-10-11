@@ -1,4 +1,5 @@
 import 'package:dotted_border/dotted_border.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -17,6 +18,26 @@ class AddPost extends StatefulWidget {
 }
 
 class _AddPostState extends State<AddPost> {
+  final _authentication = FirebaseAuth.instance;
+  User? loggedUser;
+  @override
+  void initState() {
+    super.initState();
+    getCurrentUser();
+  }
+
+  void getCurrentUser() {
+    try {
+      final user = _authentication.currentUser;
+      if (user != null) {
+        loggedUser = user;
+        print(loggedUser!.email);
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
   bool showSpinner = false;
 
   final ImagePicker _picker = ImagePicker();
@@ -47,6 +68,66 @@ class _AddPostState extends State<AddPost> {
 
   String postTitle = '';
   String postText = '';
+
+  bool isToastVisible = false; // Toast 메시지가 표시 중인지 나타내는 상태 변수
+
+  void _addPost() async {
+    final user = FirebaseAuth.instance.currentUser;
+    final userData = await FirebaseFirestore.instance
+        .collection('user')
+        .doc(user!.uid)
+        .get();
+
+    List<String> imageUrls = [];
+
+    // 이미지 업로드 및 URL 가져오기
+    for (var image in _pickedImgs) {
+      String imageUrl = await _uploadImageToFirebaseStorage(image);
+      imageUrls.add(imageUrl);
+    }
+
+    // 이미지 업로드가 완료된 후에만 Toast 메시지를 표시
+    if (imageUrls.isNotEmpty && !isToastVisible) {
+      showToastMessage("게시물 작성이 완료되었습니다.");
+      isToastVisible = true;
+
+      Navigator.of(context).pop();
+    }
+
+    // Firestore에 게시물 데이터 추가
+    FirebaseFirestore.instance.collection('BulletinBoard').add({
+      'title': postTitle,
+      'text': postText,
+      'userName': userData.data()!['userName'],
+      'imageUrls': imageUrls,
+    });
+  }
+
+  void showToastMessage(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+      gravity: ToastGravity.CENTER,
+    );
+  }
+
+  Future<String> _uploadImageToFirebaseStorage(XFile image) async {
+    try {
+      final Reference storageReference = FirebaseStorage.instance
+          .ref()
+          .child("images/${loggedUser!.uid} ${DateTime.now()}.jpg");
+      await storageReference.putFile(File(image.path));
+      String imageUrl = await storageReference.getDownloadURL();
+
+      return imageUrl;
+    } catch (e) {
+      print("Firebase Storage에 이미지를 업로드하는 동안 오류 발생: $e");
+      // 오류를 적절하게 처리하세요.
+      return '';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -251,6 +332,26 @@ class _AddPostState extends State<AddPost> {
                       setState(() {
                         showSpinner = true;
                       });
+
+                      if (_pickedImgs.isEmpty) {
+                        setState(() {
+                          showSpinner = false;
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('이미지를 선택해주세요'),
+                            backgroundColor: Colors.blue,
+                          ),
+                        );
+                        return;
+                      }
+
+                      try {
+                        _addPost();
+                      } catch (e) {
+                        print(e);
+                      }
                     },
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(10, 15, 10, 10),
