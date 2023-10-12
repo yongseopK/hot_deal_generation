@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/screen/screen_add_post.dart';
 import 'package:hot_deal_generation/screen/screen_post_detail.dart';
@@ -24,6 +25,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
   List<String> documentTitles = [];
   List<String> documentTexts = [];
   List<String> documentThumbnails = [];
+  List<String> documentUserName = [];
+  List<String> documentTime = [];
 
   Future<void> getDocumentData() async {
     try {
@@ -36,11 +39,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
         documentTitles.clear(); // 목록을 초기화
         documentTexts.clear();
         documentThumbnails.clear();
+        documentUserName.clear();
+        documentTime.clear();
 
         for (QueryDocumentSnapshot document in querySnapshot.docs) {
           String title = document.get('title');
           String text = document.get('text');
           List<dynamic>? imageUrls = document.get('imageUrls');
+          String userName = document.get('userName');
+          String time = document.get('time');
+
           String image = imageUrls != null && imageUrls.isNotEmpty
               ? imageUrls[0]
               : '빈 이미지 URL';
@@ -48,16 +56,27 @@ class _CommunityScreenState extends State<CommunityScreen> {
           documentTitles.add(title);
           documentTexts.add(text);
           documentThumbnails.add(image);
-          // documentThumbnails.add(imageUrl);
-        }
+          documentUserName.add(userName);
+          documentTime.add(time);
 
-        setState(() {});
-        print(documentThumbnails);
+          print(documentUserName);
+        }
       } else {
         print("컬렉션에 문서가 없음");
       }
     } catch (e) {
       print(e);
+    }
+  }
+
+  // 게시물 업로드 정보를 전달 받은 후 처리
+  Future<void> _handleUploadSuccess(BuildContext context) async {
+    final uploadedMessage =
+        ModalRoute.of(context)!.settings.arguments as String?;
+    print(uploadedMessage);
+    if (uploadedMessage == '게시물 업로드') {
+      // 게시물 업로드가 성공한 경우, 정보 업데이트
+      getDocumentData();
     }
   }
 
@@ -114,6 +133,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   child: RefreshIndicator(
                     onRefresh: () async {
                       await getDocumentData();
+                      setState(() {});
                     },
                     child: documentCount > 0
                         ? ListView.builder(
@@ -127,28 +147,83 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                 child: Card(
                                   margin: const EdgeInsets.all(2.0),
                                   child: ListTile(
-                                    leading: Image.network(
-                                      documentThumbnails[index],
-                                      width: width * 0.15,
-                                      height: height * 0.15,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    // leading: Container(
-                                    //   color: Colors.black,
-                                    //   // height: height * 0.2,
-                                    //   width: width * 0.15,
-                                    // ),
-                                    title: Text(
-                                      documentTitles[index],
-                                      style: const TextStyle(
-                                        color: Colors.red,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      documentTexts[index],
-                                      style: const TextStyle(fontSize: 15),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        vertical: 10, horizontal: 15),
+                                    title: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  documentTitles[index],
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 18,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: width * 0.05,
+                                                ),
+                                                documentThumbnails.isNotEmpty
+                                                    ? Image.asset(
+                                                        'images/imageicon.png',
+                                                        width: width * 0.04,
+                                                      )
+                                                    : const SizedBox(
+                                                        width: 10,
+                                                      ),
+                                              ],
+                                            ),
+                                            SizedBox(
+                                              height: height * 0.007,
+                                            ),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  documentUserName[index],
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: width * 0.02,
+                                                ),
+                                                Text(
+                                                  documentTime[index],
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                        Container(
+                                          padding:
+                                              EdgeInsets.all(width * 0.015),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[200],
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            border: Border.all(
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          child: const Column(
+                                            children: [
+                                              Text('댓글'),
+                                              Text('0'),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -176,7 +251,12 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     MaterialPageRoute(
                       builder: (context) => const AddPost(),
                     ),
-                  );
+                  ).then((result) async {
+                    if (result == "1") {
+                      await getDocumentData();
+                      setState(() {});
+                    }
+                  });
                 },
                 backgroundColor: Colors.black,
                 child: const Icon(Icons.add),

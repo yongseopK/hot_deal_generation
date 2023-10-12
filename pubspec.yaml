@@ -48,6 +48,8 @@ dependencies:
   image_picker:
   firebase_storage:
   dotted_border:
+  provider:
+  intl:
 
 
 dev_dependencies:
@@ -92,6 +94,7 @@ flutter:
     - images/storageImg.webp
     - images/VGAImg.jpeg
     - images/wearableImg.png
+    - images/imageicon.png
 
 
 

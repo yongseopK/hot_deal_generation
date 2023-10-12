@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -20,6 +21,8 @@ class AddPost extends StatefulWidget {
 class _AddPostState extends State<AddPost> {
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
+
+  static String result = "1";
   @override
   void initState() {
     super.initState();
@@ -71,43 +74,6 @@ class _AddPostState extends State<AddPost> {
 
   bool isToastVisible = false; // Toast 메시지가 표시 중인지 나타내는 상태 변수
 
-  Future<void> _addPost() async {
-    final user = FirebaseAuth.instance.currentUser;
-    final userData = await FirebaseFirestore.instance
-        .collection('user')
-        .doc(user!.uid)
-        .get();
-
-    List<String> imageUrls = [];
-
-    // 이미지 업로드 및 URL 가져오기
-    for (var image in _pickedImgs) {
-      String imageUrl = await _uploadImageToFirebaseStorage(image);
-      imageUrls.add(imageUrl);
-    }
-
-    // 가장 큰 postNum 값을 가져와서 1을 더한 후 새로운 문서에 부여
-    int latestPostNum = await _getLatestPostNum();
-    int newPostNum = latestPostNum + 1;
-
-    // Firestore에 게시물 데이터 추가
-    await FirebaseFirestore.instance.collection('BulletinBoard').add({
-      'postNum': newPostNum,
-      'title': postTitle,
-      'text': postText,
-      'userName': userData.data()!['userName'],
-      'imageUrls': imageUrls,
-    });
-
-    // 이미지 업로드가 완료된 후에만 Toast 메시지를 표시
-    if (imageUrls.isNotEmpty && !isToastVisible) {
-      showToastMessage("게시물 작성이 완료되었습니다.");
-      isToastVisible = true;
-    }
-
-    Navigator.of(context).pop();
-  }
-
   Future<int> _getLatestPostNum() async {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance
         .collection('BulletinBoard')
@@ -147,6 +113,12 @@ class _AddPostState extends State<AddPost> {
       // 오류를 적절하게 처리하세요.
       return '';
     }
+  }
+
+  @override
+  void dispose() {
+    // 자원 정리 또는 상태 변경 등을 수행
+    super.dispose(); // 반드시 호출해야 합니다.
   }
 
   @override
@@ -368,7 +340,46 @@ class _AddPostState extends State<AddPost> {
                       }
 
                       try {
-                        _addPost();
+                        final user = FirebaseAuth.instance.currentUser;
+                        final userData = await FirebaseFirestore.instance
+                            .collection('user')
+                            .doc(user!.uid)
+                            .get();
+
+                        List<String> imageUrls = [];
+
+                        // 이미지 업로드 및 URL 가져오기
+                        for (var image in _pickedImgs) {
+                          String imageUrl =
+                              await _uploadImageToFirebaseStorage(image);
+                          imageUrls.add(imageUrl); // 이미지 URL을 목록에 추가
+                        }
+
+                        // 가장 큰 postNum 값을 가져와서 1을 더한 후 새로운 문서에 부여
+                        int latestPostNum = await _getLatestPostNum();
+                        int newPostNum = latestPostNum + 1;
+
+                        DateTime dt = DateTime.now();
+
+                        // Firestore에 게시물 데이터 추가
+                        await FirebaseFirestore.instance
+                            .collection('BulletinBoard')
+                            .add({
+                          'postNum': newPostNum,
+                          'title': postTitle,
+                          'text': postText,
+                          'userName': userData.data()!['userName'],
+                          'imageUrls': imageUrls, // 이미지 URL 목록을 추가
+                          'date': DateFormat('yyyy-MM-dd').format(dt),
+                          'time': DateFormat('hh:mm:ss').format(dt)
+                        });
+
+                        // 이미지 업로드가 완료된 후에만 Toast 메시지를 표시
+                        if (imageUrls.isNotEmpty && !isToastVisible) {
+                          showToastMessage("게시물 작성이 완료되었습니다.");
+                          isToastVisible = true;
+                          Navigator.pop(context, result);
+                        }
                       } catch (e) {
                         print(e);
                       }
