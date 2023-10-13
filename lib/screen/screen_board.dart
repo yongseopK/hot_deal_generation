@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:hot_deal_generation/screen/screen_post_detail.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:hot_deal_generation/screen/screen_post_detail.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'dart:io' show Platform;
 
 class BoardScreen extends StatelessWidget {
@@ -44,7 +44,7 @@ class BoardScreen extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
-                      _navigateToPostDetail(context, index);
+                      // _navigateToPostDetail(context, index);
                     },
                     child: Card(
                       margin: const EdgeInsets.all(2.0),
@@ -79,10 +79,10 @@ class BoardScreen extends StatelessWidget {
   }
 }
 
-void _navigateToPostDetail(BuildContext context, int postIndex) {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (context) => PostDetailPage(postIndex: postIndex),
-    ),
-  );
-}
+// void _navigateToPostDetail(BuildContext context, int postIndex) {
+//   Navigator.of(context).push(
+//     MaterialPageRoute(
+//       builder: (context) => PostDetailPage(postIndex: postIndex),
+//     ),
+//   );
+// }

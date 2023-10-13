@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:dotted_border/dotted_border.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -160,6 +162,7 @@ class _AddPostState extends State<AddPost> {
     ];
     // 사용자의 화면 크기에 따른 높이 너비 설정
     Size screenSize = MediaQuery.of(context).size;
+    // ignore: unused_local_variable
     double width = screenSize.width;
     // ignore: unused_local_variable
     double height = screenSize.height;
@@ -356,7 +359,8 @@ class _AddPostState extends State<AddPost> {
                               'userName': userData.data()!['userName'],
                               'imageUrls': imageUrls, // 이미지 URL 목록을 추가
                               'date': DateFormat('yyyy-MM-dd').format(dt),
-                              'time': DateFormat('hh:mm:ss').format(dt)
+                              'time': DateFormat('HH:mm').format(dt),
+                              'viewCount': 0
                             })
                             .then((value) => print("업로드 성공"))
                             .catchError((error) => print("알 수 없는 오류 발생"));
@@ -365,6 +369,7 @@ class _AddPostState extends State<AddPost> {
                         if (postTitle.isNotEmpty && !isToastVisible) {
                           showToastMessage("게시물 작성이 완료되었습니다.");
                           isToastVisible = true;
+                          // ignore: use_build_context_synchronously
                           Navigator.pop(context, result);
                         }
                       } on FirebaseException catch (e) {

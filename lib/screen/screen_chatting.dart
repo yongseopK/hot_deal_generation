@@ -1,8 +1,10 @@
-import 'dart:ffi';
+// ignore_for_file: avoid_print, avoid_unnecessary_containers
+
+// import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/chatting/chat/message.dart';
 import 'package:hot_deal_generation/chatting/chat/new_message.dart';

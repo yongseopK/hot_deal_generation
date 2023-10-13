@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:hot_deal_generation/screen/screen_board.dart';
 import 'package:hot_deal_generation/screen/screen_category.dart';

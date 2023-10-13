@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // ignore: duplicate_import
 import 'package:google_fonts/google_fonts.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+// import 'package:fluttertoast/fluttertoast.dart';
 // import 'package:hot_deal_generation/add_image/add_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
@@ -123,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
     double width = screenSize.width;
-    double height = screenSize.height;
+    // double height = screenSize.height;
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).requestFocus(FocusNode());
@@ -361,6 +361,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             if (newUser.user != null) {
                               // ignore: use_build_context_synchronously
                               for (var i = 0; i < 2; i++) {
+                                // ignore: use_build_context_synchronously
                                 Navigator.pop(context);
                               }
                             }

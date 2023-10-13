@@ -1,10 +1,14 @@
-import 'dart:io';
+// ignore_for_file: use_build_context_synchronously, avoid_print
+
+// import 'dart:io';
+
+// import 'dart:ffi' as ffi;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:get/get_connect/http/src/utils/utils.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:get/get.dart';
+// import 'package:get/get_connect/http/src/utils/utils.dart';
+// import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/screen/screen_add_post.dart';
 import 'package:hot_deal_generation/screen/screen_post_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,6 +31,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   List<String> documentThumbnails = [];
   List<String> documentUserName = [];
   List<String> documentTime = [];
+  List<String> documentViewCount = [];
 
   Future<void> getDocumentData() async {
     try {
@@ -41,6 +46,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         documentThumbnails.clear();
         documentUserName.clear();
         documentTime.clear();
+        documentViewCount.clear();
 
         for (QueryDocumentSnapshot document in querySnapshot.docs) {
           String title = document.get('title');
@@ -48,6 +54,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
           List<dynamic>? imageUrls = document.get('imageUrls');
           String userName = document.get('userName');
           String time = document.get('time');
+          int viewCount = document.get('viewCount');
+          String parseViewCount = viewCount.toString();
 
           String image =
               imageUrls != null && imageUrls.isNotEmpty ? imageUrls[0] : '';
@@ -57,8 +65,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
           documentThumbnails.add(image);
           documentUserName.add(userName);
           documentTime.add(time);
+          documentViewCount.add(parseViewCount);
 
-          print(documentThumbnails);
+          print(documentViewCount);
         }
       } else {
         print("컬렉션에 문서가 없음");
@@ -68,16 +77,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
   }
 
-  // 게시물 업로드 정보를 전달 받은 후 처리
-  Future<void> _handleUploadSuccess(BuildContext context) async {
-    final uploadedMessage =
-        ModalRoute.of(context)!.settings.arguments as String?;
-    print(uploadedMessage);
-    if (uploadedMessage == '게시물 업로드') {
-      // 게시물 업로드가 성공한 경우, 정보 업데이트
-      getDocumentData();
-    }
-  }
+  // // 게시물 업로드 정보를 전달 받은 후 처리
+  // Future<void> _handleUploadSuccess(BuildContext context) async {
+  //   final uploadedMessage =
+  //       ModalRoute.of(context)!.settings.arguments as String?;
+  //   print(uploadedMessage);
+  //   if (uploadedMessage == '게시물 업로드') {
+  //     // 게시물 업로드가 성공한 경우, 정보 업데이트
+  //     getDocumentData();
+  //   }
+  // }
 
   @override
   void initState() {
@@ -108,6 +117,48 @@ class _CommunityScreenState extends State<CommunityScreen> {
     int documentCount = querySnapshot.docs.length;
 
     return documentCount;
+  }
+
+  // 클릭한 게시물의 Firestore 문서 ID 가져오기
+  void _navigateToPostDetail(BuildContext context, int postIndex) async {
+    DocumentSnapshot document = await FirebaseFirestore.instance
+        .collection('BulletinBoard')
+        .orderBy('postNum', descending: true)
+        .get()
+        .then((querySnapshot) => querySnapshot.docs[postIndex]);
+
+    if (document.exists) {
+      String documentId = document.id;
+
+      // Firestore에서 해당 문서를 가져옵니다.
+      DocumentReference documentReference = FirebaseFirestore.instance
+          .collection('BulletinBoard')
+          .doc(documentId);
+      DocumentSnapshot documentSnapshot = await documentReference.get();
+
+      if (documentSnapshot.exists) {
+        // 현재 조회수를 가져와서 1 증가시킵니다.
+        int currentViewCount = documentSnapshot.get('viewCount') ?? 0;
+        int newViewCount = currentViewCount + 1;
+
+        // Firestore에 업데이트된 조회수를 저장합니다.
+        await documentReference.update({'viewCount': newViewCount});
+
+        // 게시물 상세 화면으로 이동합니다.
+        Navigator.of(context)
+            .push(
+          MaterialPageRoute(
+            builder: (context) => PostDetailPage(documentId: documentId),
+          ),
+        )
+            .then((result) async {
+          if (result == "1") {
+            await getDocumentData();
+            setState(() {});
+          }
+        });
+      }
+    }
   }
 
   @override
@@ -183,9 +234,21 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                               height: height * 0.007,
                                             ),
                                             Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
                                               children: [
                                                 Text(
                                                   documentUserName[index],
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: width * 0.02,
+                                                ),
+                                                Text(
+                                                  '조회 : ${documentViewCount[index]}',
                                                   style: const TextStyle(
                                                     color: Colors.grey,
                                                     fontSize: 15,
@@ -213,7 +276,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                             borderRadius:
                                                 BorderRadius.circular(8),
                                             border: Border.all(
-                                              color: Colors.black,
+                                              color: Colors.grey.shade400,
                                             ),
                                           ),
                                           child: const Column(
@@ -265,12 +328,4 @@ class _CommunityScreenState extends State<CommunityScreen> {
       ),
     );
   }
-}
-
-void _navigateToPostDetail(BuildContext context, int postIndex) {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (context) => PostDetailPage(postIndex: postIndex),
-    ),
-  );
 }
