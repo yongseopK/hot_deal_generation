@@ -17,23 +17,25 @@ class BoardScreen extends StatelessWidget {
       child: Scaffold(
         body: Column(
           children: [
-            Row(
-              children: [
-                const SizedBox(
-                  width: 15,
-                ),
-                const Icon(
-                  Icons.add_chart,
-                  size: 40,
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  "금주의 Hot Deal",
-                  style: GoogleFonts.doHyeon(fontSize: 30),
-                ),
-              ],
+            Expanded(
+              child: Row(
+                children: [
+                  const SizedBox(
+                    width: 15,
+                  ),
+                  const Icon(
+                    Icons.add_chart,
+                    size: 40,
+                  ),
+                  const SizedBox(
+                    width: 10,
+                  ),
+                  Text(
+                    "금주의 Hot Deal",
+                    style: GoogleFonts.doHyeon(fontSize: 30),
+                  ),
+                ],
+              ),
             ),
             SizedBox(
               height: Platform.isIOS ? height * 0.735 : height * 0.727,
