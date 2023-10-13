@@ -324,21 +324,6 @@ class _AddPostState extends State<AddPost> {
                       setState(() {
                         showSpinner = true;
                       });
-
-                      if (_pickedImgs.isEmpty) {
-                        setState(() {
-                          showSpinner = false;
-                        });
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('이미지를 선택해주세요'),
-                            backgroundColor: Colors.blue,
-                          ),
-                        );
-                        return;
-                      }
-
                       try {
                         final user = FirebaseAuth.instance.currentUser;
                         final userData = await FirebaseFirestore.instance
@@ -365,22 +350,24 @@ class _AddPostState extends State<AddPost> {
                         await FirebaseFirestore.instance
                             .collection('BulletinBoard')
                             .add({
-                          'postNum': newPostNum,
-                          'title': postTitle,
-                          'text': postText,
-                          'userName': userData.data()!['userName'],
-                          'imageUrls': imageUrls, // 이미지 URL 목록을 추가
-                          'date': DateFormat('yyyy-MM-dd').format(dt),
-                          'time': DateFormat('hh:mm:ss').format(dt)
-                        });
+                              'postNum': newPostNum,
+                              'title': postTitle,
+                              'text': postText,
+                              'userName': userData.data()!['userName'],
+                              'imageUrls': imageUrls, // 이미지 URL 목록을 추가
+                              'date': DateFormat('yyyy-MM-dd').format(dt),
+                              'time': DateFormat('hh:mm:ss').format(dt)
+                            })
+                            .then((value) => print("업로드 성공"))
+                            .catchError((error) => print("알 수 없는 오류 발생"));
 
                         // 이미지 업로드가 완료된 후에만 Toast 메시지를 표시
-                        if (imageUrls.isNotEmpty && !isToastVisible) {
+                        if (postTitle.isNotEmpty && !isToastVisible) {
                           showToastMessage("게시물 작성이 완료되었습니다.");
                           isToastVisible = true;
                           Navigator.pop(context, result);
                         }
-                      } catch (e) {
+                      } on FirebaseException catch (e) {
                         print(e);
                       }
                     },

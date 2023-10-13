@@ -49,9 +49,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
           String userName = document.get('userName');
           String time = document.get('time');
 
-          String image = imageUrls != null && imageUrls.isNotEmpty
-              ? imageUrls[0]
-              : '빈 이미지 URL';
+          String image =
+              imageUrls != null && imageUrls.isNotEmpty ? imageUrls[0] : '';
 
           documentTitles.add(title);
           documentTexts.add(text);
@@ -59,7 +58,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
           documentUserName.add(userName);
           documentTime.add(time);
 
-          print(documentUserName);
+          print(documentThumbnails);
         }
       } else {
         print("컬렉션에 문서가 없음");
@@ -167,16 +166,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                   ),
                                                 ),
                                                 SizedBox(
-                                                  width: width * 0.05,
+                                                  width: width * 0.03,
                                                 ),
-                                                documentThumbnails.isNotEmpty
+                                                documentThumbnails.isNotEmpty &&
+                                                        documentThumbnails[
+                                                                index]
+                                                            .isNotEmpty
                                                     ? Image.asset(
                                                         'images/imageicon.png',
                                                         width: width * 0.04,
                                                       )
-                                                    : const SizedBox(
-                                                        width: 10,
-                                                      ),
+                                                    : const SizedBox(width: 10),
                                               ],
                                             ),
                                             SizedBox(
