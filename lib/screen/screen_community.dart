@@ -4,6 +4,8 @@
 
 // import 'dart:ffi' as ffi;
 
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
@@ -25,6 +27,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
   User? loggedUser;
 
   String fieldValue = '';
+
+  bool isNavigatingToDetail = false;
 
   List<String> documentTitles = [];
   List<String> documentTexts = [];
@@ -192,7 +196,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
                             itemBuilder: (context, index) {
                               return GestureDetector(
                                 onTap: () {
-                                  _navigateToPostDetail(context, index);
+                                  if (!isNavigatingToDetail) {
+                                    isNavigatingToDetail = true;
+                                    _navigateToPostDetail(context, index);
+
+                                    Timer(const Duration(seconds: 1), () {
+                                      isNavigatingToDetail = false;
+                                    });
+                                  }
                                 },
                                 child: Card(
                                   margin: const EdgeInsets.all(2.0),
@@ -248,7 +259,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                   width: width * 0.02,
                                                 ),
                                                 Text(
-                                                  '조회 : ${documentViewCount[index]}',
+                                                  '조회 ${documentViewCount[index]}',
                                                   style: const TextStyle(
                                                     color: Colors.grey,
                                                     fontSize: 15,
