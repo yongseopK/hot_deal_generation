@@ -3,6 +3,7 @@
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cupertino_icons/cupertino_icons.dart';
@@ -226,22 +227,44 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   }
                   setState(() {});
                 },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    isRecommend
-                        ? const Icon(
-                            Icons.star,
-                          )
-                        : const Icon(Icons.star_border),
-                    SizedBox(
-                      width: width * 0.01,
-                    ),
-                    const Text(
-                      '추천',
-                    ),
-                  ],
+                child: GestureDetector(
+                  onTap: () async {
+                    try {
+                      final user = FirebaseAuth.instance.currentUser;
+                      final userData = await FirebaseFirestore.instance
+                          .collection('user')
+                          .doc(user!.uid)
+                          .get();
+
+                      if (userData.exists) {
+                        final username = userData
+                            .data()?['userName']; // 'username'는 사용자 데이터 필드의 이름
+                        print(username);
+                      } else {
+                        print('사용자 데이터를 찾을 수 없음');
+                      }
+                    } on FirebaseException catch (e) {
+                      print(e);
+                    }
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      isRecommend
+                          ? IconButton(
+                              icon: const Icon(Icons.star),
+                              onPressed: () {},
+                            )
+                          : const Icon(Icons.star_border),
+                      SizedBox(
+                        width: width * 0.01,
+                      ),
+                      const Text(
+                        '추천',
+                      ),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(
@@ -351,7 +374,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         return GestureDetector(
                           onTap: () {},
                           child: Container(
-                            decoration: BoxDecoration(color: itemColor),
+                            decoration: BoxDecoration(
+                                color: itemColor,
+                                borderRadius: BorderRadius.circular(12)),
                             height: height * 0.1,
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
