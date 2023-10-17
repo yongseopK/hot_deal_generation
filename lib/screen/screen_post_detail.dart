@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cupertino_icons/cupertino_icons.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class PostDetailPage extends StatefulWidget {
   const PostDetailPage({Key? key, required this.documentId}) : super(key: key);
@@ -20,6 +21,9 @@ class PostDetailPage extends StatefulWidget {
 }
 
 class _PostDetailPageState extends State<PostDetailPage> {
+  final _authentication = FirebaseAuth.instance;
+  User? loggedUser = FirebaseAuth.instance.currentUser;
+
   final String documentId;
   static String result = "1";
   double fontSize = 15.0;
@@ -38,12 +42,28 @@ class _PostDetailPageState extends State<PostDetailPage> {
   String time = '';
   int intViewCount = 0;
   String viewCount = '';
+  List<String> recommendInfo = [];
+
+  String commentText = '';
 
   @override
   void initState() {
     super.initState();
     // 게시물 정보를 가져오는 비동기 함수 호출
     getPostDetails();
+    getCurrentUser();
+  }
+
+  void getCurrentUser() {
+    try {
+      final user = _authentication.currentUser;
+      if (user != null) {
+        loggedUser = user;
+        print(loggedUser!.email);
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 
   Future<void> getPostDetails() async {
@@ -54,6 +74,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
           .get();
 
       if (document.exists) {
+        final dynamic rawData = document['recommendInfo'];
+        recommendInfo = List<String>.from(rawData ?? []);
         setState(() {
           title = document['title'];
           text = document['text'];
@@ -72,9 +94,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
         // 필요에 따라 에러 메시지를 출력하거나 다른 작업을 수행
         print('게시물을 찾을 수 없습니다.');
       }
-    } catch (e) {
+    } on FirebaseAuthException catch (e) {
       print('게시물 정보를 가져오는 중 오류가 발생했습니다: $e');
     }
+  }
+
+  addComment() {
+    print('어쩔티비');
   }
 
   @override
@@ -219,52 +245,92 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 height: height * 0.03,
               ),
               ElevatedButton(
-                onPressed: () {
-                  if (!isRecommend) {
-                    isRecommend = true;
-                  } else {
-                    isRecommend = false;
-                  }
-                  setState(() {});
-                },
-                child: GestureDetector(
-                  onTap: () async {
-                    try {
-                      final user = FirebaseAuth.instance.currentUser;
-                      final userData = await FirebaseFirestore.instance
-                          .collection('user')
-                          .doc(user!.uid)
-                          .get();
-
-                      if (userData.exists) {
-                        final username = userData
-                            .data()?['userName']; // 'username'는 사용자 데이터 필드의 이름
-                        print(username);
-                      } else {
-                        print('사용자 데이터를 찾을 수 없음');
-                      }
-                    } on FirebaseException catch (e) {
-                      print(e);
-                    }
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      isRecommend
-                          ? IconButton(
-                              icon: const Icon(Icons.star),
-                              onPressed: () {},
-                            )
-                          : const Icon(Icons.star_border),
-                      SizedBox(
-                        width: width * 0.01,
-                      ),
-                      const Text(
-                        '추천',
-                      ),
-                    ],
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: !recommendInfo.contains(loggedUser!.email)
+                      ? Colors.white
+                      : Colors.black,
+                  foregroundColor: !recommendInfo.contains(loggedUser!.email)
+                      ? Colors.black
+                      : Colors.white,
+                  elevation: 0.0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: const BorderSide(
+                      color: Colors.black,
+                    ),
                   ),
+                ),
+                onPressed: () async {
+                  final currentDocument = FirebaseFirestore.instance
+                      .collection('BulletinBoard')
+                      .doc(widget.documentId);
+
+                  try {
+                    final user = FirebaseAuth.instance.currentUser;
+                    final userData = await FirebaseFirestore.instance
+                        .collection('user')
+                        .doc(user!.uid)
+                        .get();
+
+                    if (userData.exists) {
+                      if (!recommendInfo.contains(loggedUser!.email)) {
+                        currentDocument.update({
+                          'recommendInfo':
+                              FieldValue.arrayUnion([loggedUser!.email])
+                        });
+                        isRecommend = true;
+
+                        Fluttertoast.showToast(
+                          msg: '추천하셨습니다.',
+                          toastLength: Toast.LENGTH_LONG,
+                          gravity: ToastGravity.BOTTOM,
+                        );
+                        getPostDetails();
+                      } else {
+                        // ignore: use_build_context_synchronously
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('안내'),
+                              content: const Text('이미 추천한 글입니다.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('닫기'),
+                                )
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    } else {
+                      print('사용자 데이터를 찾을 수 없음');
+                    }
+                  } on FirebaseException catch (e) {
+                    print(e);
+                  }
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    !recommendInfo.contains(loggedUser!.email)
+                        ? const Icon(
+                            Icons.thumb_up_alt_outlined,
+                          )
+                        : const Icon(
+                            Icons.thumb_up_alt_rounded,
+                          ),
+                    SizedBox(
+                      width: width * 0.01,
+                    ),
+                    const Text(
+                      '추천',
+                    ),
+                  ],
                 ),
               ),
               SizedBox(
@@ -293,7 +359,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
-                  vertical: 10,
+                  vertical: 15,
                 ),
                 child: Container(
                   height: 0.3,
@@ -301,8 +367,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 ),
               ),
               Padding(
+                // 댓글 입력창 양옆 패딩
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Padding(
+                  // 댓글 입력창 밑쪽 패딩
                   padding: const EdgeInsets.only(bottom: 20),
                   child: Row(
                     children: [
@@ -318,15 +386,22 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             padding:
                                 const EdgeInsets.only(left: 20.0, right: 20.0),
                             child: TextFormField(
+                              enabled: loggedUser != null ? true : false,
                               validator: (val) =>
                                   val == "" ? "내용을 입력해주세요" : null,
-                              onSaved: (value) {},
-                              onChanged: (value) {},
+                              onSaved: (value) {
+                                commentText = value!;
+                              },
+                              onChanged: (value) {
+                                commentText = value;
+                              },
                               maxLines: null,
                               textInputAction: TextInputAction.newline,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 border: InputBorder.none,
-                                hintText: "내용을 입력해주세요",
+                                hintText: loggedUser != null
+                                    ? "내용을 입력해주세요"
+                                    : "로그인 후 댓글 이용이 가능합니다.",
                               ),
                             ),
                           ),
@@ -342,7 +417,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          loggedUser != null ? addComment() : null;
+                        },
                         child: SizedBox(
                           height: height * 0.1,
                           child: const Align(
@@ -359,7 +436,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 child: Column(
                   children: [
                     ListView.builder(
@@ -377,7 +455,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             decoration: BoxDecoration(
                                 color: itemColor,
                                 borderRadius: BorderRadius.circular(12)),
-                            height: height * 0.1,
+                            height: height * 0.11,
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
                               child: Column(
