@@ -246,10 +246,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: !recommendInfo.contains(loggedUser!.email)
+                  backgroundColor: !recommendInfo.contains(loggedUser?.email)
                       ? Colors.white
                       : Colors.black,
-                  foregroundColor: !recommendInfo.contains(loggedUser!.email)
+                  foregroundColor: !recommendInfo.contains(loggedUser?.email)
                       ? Colors.black
                       : Colors.white,
                   elevation: 0.0,
@@ -266,48 +266,58 @@ class _PostDetailPageState extends State<PostDetailPage> {
                       .doc(widget.documentId);
 
                   try {
-                    final user = FirebaseAuth.instance.currentUser;
-                    final userData = await FirebaseFirestore.instance
-                        .collection('user')
-                        .doc(user!.uid)
-                        .get();
+                    if (loggedUser != null) {
+                      final user = FirebaseAuth.instance.currentUser;
+                      final userData = await FirebaseFirestore.instance
+                          .collection('user')
+                          .doc(user!.uid)
+                          .get();
 
-                    if (userData.exists) {
-                      if (!recommendInfo.contains(loggedUser!.email)) {
-                        currentDocument.update({
-                          'recommendInfo':
-                              FieldValue.arrayUnion([loggedUser!.email])
-                        });
-                        isRecommend = true;
+                      if (userData.exists) {
+                        if (!recommendInfo.contains(loggedUser?.email)) {
+                          currentDocument.update({
+                            'recommendInfo':
+                                FieldValue.arrayUnion([loggedUser?.email])
+                          });
+                          isRecommend = true;
 
-                        Fluttertoast.showToast(
-                          msg: '추천하셨습니다.',
-                          toastLength: Toast.LENGTH_LONG,
-                          gravity: ToastGravity.BOTTOM,
-                        );
-                        getPostDetails();
+                          Fluttertoast.showToast(
+                            msg: '추천하셨습니다.',
+                            toastLength: Toast.LENGTH_LONG,
+                            gravity: ToastGravity.BOTTOM,
+                          );
+                          getPostDetails();
+                        } else {
+                          // ignore: use_build_context_synchronously
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('안내'),
+                                content: const Text('이미 추천한 글입니다.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('닫기'),
+                                  )
+                                ],
+                              );
+                            },
+                          );
+                        }
                       } else {
-                        // ignore: use_build_context_synchronously
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('안내'),
-                              content: const Text('이미 추천한 글입니다.'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text('닫기'),
-                                )
-                              ],
-                            );
-                          },
-                        );
+                        print('사용자 데이터를 찾을 수 없음');
                       }
                     } else {
-                      print('사용자 데이터를 찾을 수 없음');
+                      Fluttertoast.showToast(
+                        msg: '로그인 후 추천기능을 이용할 수 있습니다.',
+                        toastLength: Toast.LENGTH_LONG,
+                        gravity: ToastGravity.CENTER,
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
+                      );
                     }
                   } on FirebaseException catch (e) {
                     print(e);
@@ -317,7 +327,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    !recommendInfo.contains(loggedUser!.email)
+                    !recommendInfo.contains(loggedUser?.email)
                         ? const Icon(
                             Icons.thumb_up_alt_outlined,
                           )
