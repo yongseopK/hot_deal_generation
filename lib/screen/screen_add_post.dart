@@ -360,7 +360,8 @@ class _AddPostState extends State<AddPost> {
                               'imageUrls': imageUrls, // 이미지 URL 목록을 추가
                               'date': DateFormat('yyyy-MM-dd').format(dt),
                               'time': DateFormat('HH:mm').format(dt),
-                              'viewCount': 0
+                              'viewCount': 0,
+                              'recommendInfo': [],
                             })
                             .then((value) => print("업로드 성공"))
                             .catchError((error) => print("알 수 없는 오류 발생"));

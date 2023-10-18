@@ -1,13 +1,11 @@
 // ignore_for_file: avoid_print
 
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:cupertino_icons/cupertino_icons.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
 
 class PostDetailPage extends StatefulWidget {
   const PostDetailPage({Key? key, required this.documentId}) : super(key: key);
@@ -32,6 +30,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   bool isRecommend = false;
 
+  TextEditingController commentTextController = TextEditingController();
+
   _PostDetailPageState({required this.documentId});
 
   String title = '';
@@ -43,8 +43,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
   int intViewCount = 0;
   String viewCount = '';
   List<String> recommendInfo = [];
+  List<String> imageUrls = [];
 
   String commentText = '';
+  DocumentSnapshot? document;
+  List<String> commentList = [];
+
+  int numberOfDocument = 0;
 
   @override
   void initState() {
@@ -52,6 +57,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     // 게시물 정보를 가져오는 비동기 함수 호출
     getPostDetails();
     getCurrentUser();
+    getCommentData();
   }
 
   void getCurrentUser() {
@@ -66,28 +72,72 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
+  List<String> documentComment = [];
+  List<String> documentDateTime = [];
+  List<String> documentUserName = [];
+
+  List<String> commentArr = [];
+  List<String> userNameArr = [];
+  List<String> dateTimeArr = [];
+
+  Future<void> getCommentData() async {
+    // 메인 컬렉션의 현재 문서정보 가져오기
+    final mainCollectionRef = FirebaseFirestore.instance
+        .collection('BulletinBoard')
+        .doc(widget.documentId);
+
+    final commentCollectionRef = mainCollectionRef.collection('comments');
+
+    QuerySnapshot snapshot =
+        await commentCollectionRef.orderBy('dateTime', descending: false).get();
+
+    commentArr.clear();
+    userNameArr.clear();
+    dateTimeArr.clear();
+
+    for (QueryDocumentSnapshot document in snapshot.docs) {
+      Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+      print('문서 ID: ${document.id}');
+      print('데이터: ${data['comment']}');
+
+      commentArr.add(data['comment']);
+      userNameArr.add(data['userName']);
+      dateTimeArr.add(data['dateTime']);
+
+      // 여기에서 필요한 데이터를 추출하여 출력하거나 처리할 수 있습니다.
+    }
+
+    numberOfDocument = snapshot.size;
+
+    print("문서 개수 : $numberOfDocument");
+  }
+
   Future<void> getPostDetails() async {
     try {
-      DocumentSnapshot document = await FirebaseFirestore.instance
+      document = await FirebaseFirestore.instance
           .collection('BulletinBoard')
           .doc(widget.documentId) // documentId 사용
           .get();
 
-      if (document.exists) {
-        final dynamic rawData = document['recommendInfo'];
+      if (document!.exists) {
+        final dynamic rawData = document!['recommendInfo'];
         recommendInfo = List<String>.from(rawData ?? []);
         setState(() {
-          title = document['title'];
-          text = document['text'];
-          image =
-              document['imageUrls'] != null && document['imageUrls'].isNotEmpty
-                  ? document['imageUrls'][0]
-                  : '';
-          userName = document['userName'];
-          date = document['date'];
-          time = document['time'];
-          intViewCount = document['viewCount'];
+          title = document?['title'];
+          text = document?['text'];
+          image = document?['imageUrls'] != null &&
+                  document!['imageUrls'].isNotEmpty
+              ? document!['imageUrls'][0]
+              : '';
+          userName = document?['userName'];
+          date = document?['date'];
+          time = document?['time'];
+          intViewCount = document?['viewCount'];
           viewCount = intViewCount.toString();
+
+          imageUrls = List<String>.from(document!['imageUrls'] ?? []);
+
+          print(imageUrls.length);
         });
       } else {
         // 게시물을 찾을 수 없을 때 처리 (예: 삭제된 게시물)
@@ -99,8 +149,43 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
-  addComment() {
-    print('어쩔티비');
+  addComment() async {
+    final currentDocument = FirebaseFirestore.instance
+        .collection('BulletinBoard')
+        .doc(widget.documentId);
+    try {
+      if (loggedUser != null) {
+        final user = FirebaseAuth.instance.currentUser;
+        final userData = await FirebaseFirestore.instance
+            .collection('user')
+            .doc(user!.uid)
+            .get();
+
+        Map<String, dynamic> userDataMap =
+            userData.data() as Map<String, dynamic>;
+        String currentUserName = userDataMap['userName'];
+
+        DateTime dt = DateTime.now();
+
+        String dateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(dt);
+
+        final commentData = {
+          'userName': currentUserName,
+          'comment': commentText,
+          'dateTime': dateTime
+        };
+
+        await currentDocument.collection('comments').add(commentData);
+
+        await getCommentData();
+
+        commentTextController.clear();
+
+        setState(() {});
+      }
+    } on FirebaseException catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -112,10 +197,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       onWillPop: () async => false,
       child: Scaffold(
         appBar: AppBar(
-          title: Align(
-            alignment: Alignment.center,
-            child: Text(title),
-          ),
+          title: Text(title),
           elevation: 0.0,
           backgroundColor: Colors.black,
           leading: IconButton(
@@ -174,9 +256,18 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             SizedBox(
                               width: width * 0.02,
                             ),
-                            const Text(
-                              '댓글 1',
-                              style: TextStyle(
+                            Text(
+                              '댓글 $numberOfDocument',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                              ),
+                            ),
+                            SizedBox(
+                              width: width * 0.02,
+                            ),
+                            Text(
+                              '추천 ${recommendInfo.length}',
+                              style: const TextStyle(
                                 color: Colors.grey,
                               ),
                             )
@@ -231,14 +322,112 @@ class _PostDetailPageState extends State<PostDetailPage> {
               if (image.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Image.network(image),
+                  child: Column(
+                    children: [
+                      if (imageUrls.length == 1)
+                        Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(imageUrls[0]),
+                            ),
+                          ],
+                        )
+                      else if (imageUrls.length == 2)
+                        Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(imageUrls[0]),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: height * 0.005,
+                              ),
+                            ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(imageUrls[1]),
+                            ),
+                          ],
+                        )
+                      else if (imageUrls.length == 3)
+                        Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(imageUrls[0]),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: height * 0.005,
+                              ),
+                            ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(imageUrls[1]),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: height * 0.005,
+                              ),
+                            ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(imageUrls[2]),
+                            ),
+                          ],
+                        )
+                      else if (imageUrls.length == 4)
+                        Column(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(imageUrls[0]),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: height * 0.005,
+                              ),
+                            ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(imageUrls[1]),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: height * 0.005,
+                              ),
+                            ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(imageUrls[2]),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: height * 0.005,
+                              ),
+                            ),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(imageUrls[3]),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
                 ),
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                child: Text(
-                  '내용: $text',
-                  style: TextStyle(fontSize: fontSize),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      text,
+                      style: TextStyle(fontSize: fontSize),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(
@@ -292,17 +481,40 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('안내'),
-                                content: const Text('이미 추천한 글입니다.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text('닫기'),
-                                  )
-                                ],
+                              return Dialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      16.0), // 원하는 border radius 값으로 변경
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      const Text(
+                                        '안내',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 19,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: height * 0.03,
+                                      ),
+                                      const Text(
+                                        '이미 추천한 글입니다.',
+                                        style: TextStyle(fontSize: 17),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('닫기'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               );
                             },
                           );
@@ -396,9 +608,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             padding:
                                 const EdgeInsets.only(left: 20.0, right: 20.0),
                             child: TextFormField(
+                              controller: commentTextController,
                               enabled: loggedUser != null ? true : false,
-                              validator: (val) =>
-                                  val == "" ? "내용을 입력해주세요" : null,
                               onSaved: (value) {
                                 commentText = value!;
                               },
@@ -429,6 +640,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         ),
                         onPressed: () {
                           loggedUser != null ? addComment() : null;
+                          setState(() {});
                         },
                         child: SizedBox(
                           height: height * 0.1,
@@ -452,36 +664,57 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   children: [
                     ListView.builder(
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: 8,
+                      itemCount: numberOfDocument,
                       shrinkWrap: true,
                       itemBuilder: (context, index) {
                         // 홀수 인덱스이면 회색, 짝수 인덱스이면 흰색 배경
                         Color itemColor = index.isOdd
                             ? Colors.transparent
                             : Colors.grey.shade200;
-                        return GestureDetector(
-                          onTap: () {},
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: itemColor,
-                                borderRadius: BorderRadius.circular(12)),
-                            height: height * 0.11,
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('닉네임'),
-                                  SizedBox(
-                                    height: height * 0.01,
+                        Border? itemBorder = index.isOdd
+                            ? Border.all(color: Colors.grey.shade200)
+                            : null;
+                        return Container(
+                          decoration: BoxDecoration(
+                              color: itemColor,
+                              border: itemBorder,
+                              borderRadius: BorderRadius.circular(12)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      userNameArr[index],
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {},
+                                      child: const Icon(
+                                        Icons.dangerous_outlined,
+                                        color: Colors.red,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: height * 0.01,
+                                ),
+                                Text(commentArr[index]),
+                                SizedBox(
+                                  height: height * 0.01,
+                                ),
+                                Text(
+                                  dateTimeArr[index],
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey,
                                   ),
-                                  const Text('내용'),
-                                  SizedBox(
-                                    height: height * 0.01,
-                                  ),
-                                  const Text('날짜 / 시간')
-                                ],
-                              ),
+                                )
+                              ],
                             ),
                           ),
                         );

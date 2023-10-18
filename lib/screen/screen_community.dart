@@ -7,10 +7,8 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:get/get_connect/http/src/utils/utils.dart';
-// import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/screen/screen_add_post.dart';
 import 'package:hot_deal_generation/screen/screen_post_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -30,12 +28,18 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   bool isNavigatingToDetail = false;
 
+  int recommendLength = 0;
+
+  int commentCount = 0;
+
   List<String> documentTitles = [];
   List<String> documentTexts = [];
   List<String> documentThumbnails = [];
   List<String> documentUserName = [];
   List<String> documentTime = [];
+  List<String> documentDate = [];
   List<String> documentViewCount = [];
+  List<String> documentRecomendCount = [];
 
   Future<void> getDocumentData() async {
     try {
@@ -50,7 +54,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
         documentThumbnails.clear();
         documentUserName.clear();
         documentTime.clear();
+        documentDate.clear();
         documentViewCount.clear();
+        documentRecomendCount.clear();
 
         for (QueryDocumentSnapshot document in querySnapshot.docs) {
           String title = document.get('title');
@@ -58,8 +64,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
           List<dynamic>? imageUrls = document.get('imageUrls');
           String userName = document.get('userName');
           String time = document.get('time');
+          String date = document.get('date');
           int viewCount = document.get('viewCount');
           String parseViewCount = viewCount.toString();
+          List<dynamic>? recommend = document['recommendInfo'];
+
+          recommendLength = recommend!.length;
+          String recommendCount =
+              recommend.isNotEmpty ? recommendLength.toString() : "0";
 
           String image =
               imageUrls != null && imageUrls.isNotEmpty ? imageUrls[0] : '';
@@ -69,9 +81,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
           documentThumbnails.add(image);
           documentUserName.add(userName);
           documentTime.add(time);
+          documentDate.add(date);
           documentViewCount.add(parseViewCount);
+          documentRecomendCount.add(recommendCount);
 
-          print(documentViewCount);
+          print(recommendCount);
         }
       } else {
         print("컬렉션에 문서가 없음");
@@ -80,17 +94,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
       print(e);
     }
   }
-
-  // // 게시물 업로드 정보를 전달 받은 후 처리
-  // Future<void> _handleUploadSuccess(BuildContext context) async {
-  //   final uploadedMessage =
-  //       ModalRoute.of(context)!.settings.arguments as String?;
-  //   print(uploadedMessage);
-  //   if (uploadedMessage == '게시물 업로드') {
-  //     // 게시물 업로드가 성공한 경우, 정보 업데이트
-  //     getDocumentData();
-  //   }
-  // }
 
   @override
   void initState() {
@@ -269,6 +272,16 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                   width: width * 0.02,
                                                 ),
                                                 Text(
+                                                  documentDate[index],
+                                                  style: const TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  width: width * 0.01,
+                                                ),
+                                                Text(
                                                   documentTime[index],
                                                   style: const TextStyle(
                                                     color: Colors.grey,
@@ -280,6 +293,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                           ],
                                         ),
                                         Container(
+                                          width: width * 0.18,
                                           padding:
                                               EdgeInsets.all(width * 0.015),
                                           decoration: BoxDecoration(
@@ -290,10 +304,31 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                               color: Colors.grey.shade400,
                                             ),
                                           ),
-                                          child: const Column(
+                                          child: Column(
                                             children: [
-                                              Text('댓글'),
-                                              Text('0'),
+                                              const Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceAround,
+                                                children: [
+                                                  Icon(
+                                                    CupertinoIcons
+                                                        .chat_bubble_2,
+                                                  ),
+                                                  Text('0'),
+                                                ],
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceAround,
+                                                children: [
+                                                  const Icon(Icons
+                                                      .thumb_up_alt_outlined),
+                                                  Text(documentRecomendCount[
+                                                      index]),
+                                                ],
+                                              ),
                                             ],
                                           ),
                                         ),
