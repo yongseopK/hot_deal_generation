@@ -42,7 +42,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   List<String> documentRecomendCount = [];
   List<String> commentCounts = [];
 
-  Future<void> getDocumentData() async {
+  Future<void> getDocumentDataAndCommentCount() async {
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('BulletinBoard')
@@ -58,6 +58,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         documentDate.clear();
         documentViewCount.clear();
         documentRecomendCount.clear();
+        commentCounts.clear(); // 댓글 수 목록 초기화
 
         for (QueryDocumentSnapshot document in querySnapshot.docs) {
           String title = document.get('title');
@@ -91,41 +92,39 @@ class _CommunityScreenState extends State<CommunityScreen> {
       } else {
         print("컬렉션에 문서가 없음");
       }
+
+      // 댓글 개수 가져오는 부분
+      CollectionReference mainCollectionRef =
+          FirebaseFirestore.instance.collection('BulletinBoard');
+      QuerySnapshot mainCollectionSnapshot = await mainCollectionRef.get();
+
+      for (QueryDocumentSnapshot mainDoc in mainCollectionSnapshot.docs) {
+        String mainDocumentId = mainDoc.id; // 본 컬렉션 문서 ID
+
+        QuerySnapshot subcollectionSnapshot = await mainCollectionRef
+            .doc(mainDocumentId)
+            .collection('comments')
+            .orderBy('dateTime', descending: true)
+            .get();
+
+        String commentCount = subcollectionSnapshot.docs.length.toString();
+
+        // 서브컬렉션의 댓글 수를 commentCounts 리스트에 추가
+        commentCounts.add(commentCount);
+      }
+      print(commentCounts);
+
+      setState(() {});
     } catch (e) {
       print(e);
     }
-  }
-
-  Future<void> getCommentCountsForAllDocuments() async {
-    CollectionReference mainCollectionRef =
-        FirebaseFirestore.instance.collection('BulletinBoard');
-    QuerySnapshot mainCollectionSnapshot = await mainCollectionRef.get();
-
-    for (QueryDocumentSnapshot mainDoc in mainCollectionSnapshot.docs) {
-      String mainDocumentId = mainDoc.id; // 본 컬렉션 문서 ID
-
-      QuerySnapshot subcollectionSnapshot = await mainCollectionRef
-          .doc(mainDocumentId)
-          .collection('comments')
-          .orderBy('dateTime', descending: true)
-          .get();
-
-      String commentCount = subcollectionSnapshot.docs.length.toString();
-
-      // 서브컬렉션의 댓글 수를 commentCounts 리스트에 추가
-      commentCounts.add(commentCount);
-    }
-    print(commentCounts);
-
-    setState(() {});
   }
 
   @override
   void initState() {
     super.initState();
     getCurrentUser();
-    getDocumentData();
-    getCommentCountsForAllDocuments();
+    getDocumentDataAndCommentCount();
   }
 
   void getCurrentUser() {
@@ -186,7 +185,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         )
             .then((result) async {
           if (result == "1") {
-            await getDocumentData();
+            await getDocumentDataAndCommentCount();
             setState(() {});
           }
         });
@@ -221,11 +220,10 @@ class _CommunityScreenState extends State<CommunityScreen> {
               if (snapshot.hasError) {
                 return Text('에러 발생: ${snapshot.error}');
               } else {
-                final int documentCount = snapshot.data ?? 0; // 문서 개수 또는 0으로 설정
                 return SizedBox(
                   child: RefreshIndicator(
                     onRefresh: () async {
-                      await getDocumentData();
+                      await getDocumentDataAndCommentCount();
                       setState(() {});
                     },
                     child: documentTitles.isNotEmpty
@@ -353,8 +351,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                                         .chat_bubble_2,
                                                   ),
                                                   Text(commentCounts.isNotEmpty
-                                                      ? commentCounts.reversed
-                                                          .toList()[index]
+                                                      ? commentCounts[index]
                                                       : '0'),
                                                 ],
                                               ),
@@ -402,7 +399,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                   ).then((result) async {
                     if (result == "1") {
-                      await getDocumentData();
+                      await getDocumentDataAndCommentCount();
                       setState(() {});
                     }
                   });

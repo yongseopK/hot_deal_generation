@@ -7,6 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 
+import 'dart:io';
+import 'dart:async';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+
 class PostDetailPage extends StatefulWidget {
   const PostDetailPage({Key? key, required this.documentId}) : super(key: key);
   // final int postIndex;
@@ -77,6 +87,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   List<String> documentUserName = [];
 
   List<String> commentArr = [];
+  List<String> commentDocIds = [];
   List<String> userNameArr = [];
   List<String> dateTimeArr = [];
 
@@ -92,15 +103,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
         await commentCollectionRef.orderBy('dateTime', descending: false).get();
 
     commentArr.clear();
+    commentDocIds.clear();
     userNameArr.clear();
     dateTimeArr.clear();
 
     for (QueryDocumentSnapshot document in snapshot.docs) {
       Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-      print('문서 ID: ${document.id}');
-      print('데이터: ${data['comment']}');
 
       commentArr.add(data['comment']);
+      commentDocIds.add(document.id);
       userNameArr.add(data['userName']);
       dateTimeArr.add(data['dateTime']);
 
@@ -198,6 +209,23 @@ class _PostDetailPageState extends State<PostDetailPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(title),
+          actions: [
+            PopupMenuButton(
+                itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        child: Text('전체화면 캡쳐'),
+                      ),
+                      const PopupMenuItem(
+                        child: Text('Item1'),
+                      ),
+                      const PopupMenuItem(
+                        child: Text('Item1'),
+                      ),
+                      const PopupMenuItem(
+                        child: Text('Item1'),
+                      ),
+                    ]),
+          ],
           elevation: 0.0,
           backgroundColor: Colors.black,
           leading: IconButton(
@@ -691,7 +719,58 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                       userNameArr[index],
                                     ),
                                     GestureDetector(
-                                      onTap: () {},
+                                      onTap: () async {
+                                        final user =
+                                            FirebaseAuth.instance.currentUser;
+                                        final userData = await FirebaseFirestore
+                                            .instance
+                                            .collection('user')
+                                            .doc(user!.uid)
+                                            .get();
+
+                                        Map<String, dynamic> userDataMap =
+                                            userData.data()
+                                                as Map<String, dynamic>;
+                                        String currentUserName =
+                                            userDataMap['userName'];
+                                        if (currentUserName == userName) {
+                                          CollectionReference mainCollection =
+                                              FirebaseFirestore.instance
+                                                  .collection('BulletinBoard');
+
+                                          CollectionReference subCollection =
+                                              mainCollection
+                                                  .doc(documentId)
+                                                  .collection('comments');
+
+                                          String documentIdToDelete =
+                                              commentDocIds[index];
+
+                                          subCollection
+                                              .doc(documentIdToDelete)
+                                              .delete()
+                                              .then((value) async {
+                                            Fluttertoast.showToast(
+                                              msg: '댓글이 삭제됐습니다.',
+                                              toastLength: Toast.LENGTH_LONG,
+                                              gravity: ToastGravity.BOTTOM,
+                                              backgroundColor: Colors.black,
+                                            );
+                                            await getCommentData();
+
+                                            setState(() {});
+                                          }).catchError((error) {
+                                            print('문서 삭제 실패 : $error');
+                                          });
+                                        } else {
+                                          Fluttertoast.showToast(
+                                            msg: "본인이 작성한 댓글만 삭제할 수 있습니다.",
+                                            toastLength: Toast.LENGTH_LONG,
+                                            gravity: ToastGravity.BOTTOM,
+                                            backgroundColor: Colors.red,
+                                          );
+                                        }
+                                      },
                                       child: const Icon(
                                         Icons.dangerous_outlined,
                                         color: Colors.red,

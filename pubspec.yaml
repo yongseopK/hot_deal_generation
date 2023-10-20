@@ -50,6 +50,9 @@ dependencies:
   dotted_border:
   provider:
   intl:
+  native_screenshot:
+  screenshot:
+  image_gallery_saver:
 
 
 dev_dependencies:
