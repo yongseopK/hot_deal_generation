@@ -483,8 +483,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             builder: (BuildContext context) {
                               return Dialog(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      16.0), // 원하는 border radius 값으로 변경
+                                  borderRadius: BorderRadius.circular(16.0),
                                 ),
                                 child: Container(
                                   padding: const EdgeInsets.all(16.0),

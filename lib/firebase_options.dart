@@ -67,7 +67,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '278423559',
     projectId: 'hot-deal-gene',
     storageBucket: 'hot-deal-gene.appspot.com',
-    iosBundleId: 'com.example.hotDealGeneration',
+    iosBundleId: 'con.hotDeal.hotDealGeneration',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -76,6 +76,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '278423559',
     projectId: 'hot-deal-gene',
     storageBucket: 'hot-deal-gene.appspot.com',
-    iosBundleId: 'com.example.hotDealGeneration.RunnerTests',
+    iosBundleId: 'con.hotDeal.hotDealGeneration.RunnerTests',
   );
 }

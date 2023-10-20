@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
+            VALUE "CompanyName", "con.hotDeal" "\0"
             VALUE "FileDescription", "hot_deal_generation" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "hot_deal_generation" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2023 com.example. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023 con.hotDeal. All rights reserved." "\0"
             VALUE "OriginalFilename", "hot_deal_generation.exe" "\0"
             VALUE "ProductName", "hot_deal_generation" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"

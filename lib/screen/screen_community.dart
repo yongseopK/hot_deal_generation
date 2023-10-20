@@ -30,7 +30,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   int recommendLength = 0;
 
-  int commentCount = 0;
+  int totalDocumentCount = 0;
 
   List<String> documentTitles = [];
   List<String> documentTexts = [];
@@ -40,6 +40,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   List<String> documentDate = [];
   List<String> documentViewCount = [];
   List<String> documentRecomendCount = [];
+  List<String> commentCounts = [];
 
   Future<void> getDocumentData() async {
     try {
@@ -95,11 +96,36 @@ class _CommunityScreenState extends State<CommunityScreen> {
     }
   }
 
+  Future<void> getCommentCountsForAllDocuments() async {
+    CollectionReference mainCollectionRef =
+        FirebaseFirestore.instance.collection('BulletinBoard');
+    QuerySnapshot mainCollectionSnapshot = await mainCollectionRef.get();
+
+    for (QueryDocumentSnapshot mainDoc in mainCollectionSnapshot.docs) {
+      String mainDocumentId = mainDoc.id; // 본 컬렉션 문서 ID
+
+      QuerySnapshot subcollectionSnapshot = await mainCollectionRef
+          .doc(mainDocumentId)
+          .collection('comments')
+          .orderBy('dateTime', descending: true)
+          .get();
+
+      String commentCount = subcollectionSnapshot.docs.length.toString();
+
+      // 서브컬렉션의 댓글 수를 commentCounts 리스트에 추가
+      commentCounts.add(commentCount);
+    }
+    print(commentCounts);
+
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
     getCurrentUser();
     getDocumentData();
+    getCommentCountsForAllDocuments();
   }
 
   void getCurrentUser() {
@@ -180,7 +206,17 @@ class _CommunityScreenState extends State<CommunityScreen> {
           future: getDocumentCountInCollection(), // 문서 개수를 가져오는 비동기 함수 호출
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator(); // 데이터가 로드되기를 기다릴 동안 로딩 표시
+              return const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                    ],
+                  ),
+                ],
+              ); // 데이터가 로드되기를 기다릴 동안 로딩 표시
             } else {
               if (snapshot.hasError) {
                 return Text('에러 발생: ${snapshot.error}');
@@ -192,13 +228,14 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       await getDocumentData();
                       setState(() {});
                     },
-                    child: documentCount > 0
+                    child: documentTitles.isNotEmpty
                         ? ListView.builder(
                             itemCount:
                                 documentTitles.length, // 게시물 개수에 문서 개수를 할당
                             itemBuilder: (context, index) {
                               return GestureDetector(
                                 onTap: () {
+                                  print('인덱스 : $index');
                                   if (!isNavigatingToDetail) {
                                     isNavigatingToDetail = true;
                                     _navigateToPostDetail(context, index);
@@ -306,16 +343,19 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                           ),
                                           child: Column(
                                             children: [
-                                              const Row(
+                                              Row(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment
                                                         .spaceAround,
                                                 children: [
-                                                  Icon(
+                                                  const Icon(
                                                     CupertinoIcons
                                                         .chat_bubble_2,
                                                   ),
-                                                  Text('0'),
+                                                  Text(commentCounts.isNotEmpty
+                                                      ? commentCounts.reversed
+                                                          .toList()[index]
+                                                      : '0'),
                                                 ],
                                               ),
                                               Row(
