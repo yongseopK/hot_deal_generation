@@ -5,17 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-
-import 'dart:io';
 import 'dart:async';
-import 'dart:ui' as ui;
-import 'dart:typed_data';
-
-import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class PostDetailPage extends StatefulWidget {
   const PostDetailPage({Key? key, required this.documentId}) : super(key: key);
@@ -199,6 +192,46 @@ class _PostDetailPageState extends State<PostDetailPage> {
     }
   }
 
+  void removePost() async {
+    // 현재 사용자 정보 불러오기
+    final user = FirebaseAuth.instance.currentUser;
+    final userData = await FirebaseFirestore.instance
+        .collection('user')
+        .doc(user!.uid)
+        .get();
+
+    Map<String, dynamic> userDataMap = userData.data() as Map<String, dynamic>;
+    String currentUserName = userDataMap['userName'];
+
+    try {
+      if (currentUserName == userName) {
+        await FirebaseFirestore.instance
+            .collection('BulletinBoard')
+            .doc(documentId)
+            .delete()
+            .then((value) {
+          Fluttertoast.showToast(
+            msg: '삭제가 완료됐습니다.',
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+          );
+          Navigator.pop(context, result);
+        }).catchError((error) {
+          print(error);
+        });
+      } else {
+        Fluttertoast.showToast(
+          msg: "본인의 게시물만 삭제할 수 있습니다.",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+        );
+      }
+    } on FirebaseException catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -212,8 +245,72 @@ class _PostDetailPageState extends State<PostDetailPage> {
           actions: [
             PopupMenuButton(
                 itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        child: Text('전체화면 캡쳐'),
+                      PopupMenuItem(
+                        child: Text(
+                          '게시물 삭제',
+                          style: GoogleFonts.nanumGothic(fontSize: 15),
+                        ),
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Dialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      const Text(
+                                        '안내',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 19,
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: height * 0.03,
+                                      ),
+                                      const Text(
+                                        '게시물을 삭제하시겠습니까?',
+                                        style: TextStyle(fontSize: 17),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          TextButton(
+                                            onPressed: () {
+                                              removePost();
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text(
+                                              '삭제',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text('닫기'),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
                       const PopupMenuItem(
                         child: Text('Item1'),
@@ -314,8 +411,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                 },
                                 icon: Icon(
                                   Icons.zoom_in_outlined,
-                                  size: width * 0.05,
-                                  color: Colors.blue,
+                                  size: width * 0.055,
                                 ),
                               ),
                             ),
@@ -330,8 +426,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                 },
                                 icon: Icon(
                                   Icons.zoom_out_outlined,
-                                  size: width * 0.05,
-                                  color: Colors.blue,
+                                  size: width * 0.055,
                                 ),
                               ),
                             )
@@ -720,20 +815,24 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                     ),
                                     GestureDetector(
                                       onTap: () async {
-                                        final user =
-                                            FirebaseAuth.instance.currentUser;
-                                        final userData = await FirebaseFirestore
-                                            .instance
-                                            .collection('user')
-                                            .doc(user!.uid)
-                                            .get();
+                                        String documentIdToDelete =
+                                            commentDocIds[index];
+                                        try {
+                                          final user =
+                                              FirebaseAuth.instance.currentUser;
+                                          final currentUserData =
+                                              await FirebaseFirestore.instance
+                                                  .collection('user')
+                                                  .doc(user!.uid)
+                                                  .get();
 
-                                        Map<String, dynamic> userDataMap =
-                                            userData.data()
-                                                as Map<String, dynamic>;
-                                        String currentUserName =
-                                            userDataMap['userName'];
-                                        if (currentUserName == userName) {
+                                          Map<String, dynamic> userDataMap =
+                                              currentUserData.data()
+                                                  as Map<String, dynamic>;
+
+                                          String currentUserName =
+                                              userDataMap['userName'];
+
                                           CollectionReference mainCollection =
                                               FirebaseFirestore.instance
                                                   .collection('BulletinBoard');
@@ -743,32 +842,148 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                   .doc(documentId)
                                                   .collection('comments');
 
-                                          String documentIdToDelete =
-                                              commentDocIds[index];
-
-                                          subCollection
+                                          FirebaseFirestore.instance
+                                              .collection('BulletinBoard')
+                                              .doc(documentId)
+                                              .collection('comments')
                                               .doc(documentIdToDelete)
-                                              .delete()
-                                              .then((value) async {
-                                            Fluttertoast.showToast(
-                                              msg: '댓글이 삭제됐습니다.',
-                                              toastLength: Toast.LENGTH_LONG,
-                                              gravity: ToastGravity.BOTTOM,
-                                              backgroundColor: Colors.black,
-                                            );
-                                            await getCommentData();
+                                              .get()
+                                              .then((DocumentSnapshot doc) {
+                                            if (doc.exists) {
+                                              Map<String, dynamic> data =
+                                                  doc.data()
+                                                      as Map<String, dynamic>;
+                                              String commentUserName =
+                                                  data['userName'];
+                                              print(commentUserName);
 
-                                            setState(() {});
-                                          }).catchError((error) {
-                                            print('문서 삭제 실패 : $error');
+                                              if (currentUserName ==
+                                                  commentUserName) {
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return Dialog(
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10.0),
+                                                      ),
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(16.0),
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: <Widget>[
+                                                            const Text(
+                                                              '안내',
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 19,
+                                                              ),
+                                                            ),
+                                                            SizedBox(
+                                                              height:
+                                                                  height * 0.03,
+                                                            ),
+                                                            const Text(
+                                                              '게시물을 삭제하시겠습니까?',
+                                                              style: TextStyle(
+                                                                  fontSize: 17),
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 16),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .end,
+                                                              children: [
+                                                                TextButton(
+                                                                  onPressed:
+                                                                      () {
+                                                                    subCollection
+                                                                        .doc(
+                                                                            documentIdToDelete)
+                                                                        .delete()
+                                                                        .then(
+                                                                            (value) async {
+                                                                      Fluttertoast
+                                                                          .showToast(
+                                                                        msg:
+                                                                            '댓글이 삭제됐습니다.',
+                                                                        toastLength:
+                                                                            Toast.LENGTH_LONG,
+                                                                        gravity:
+                                                                            ToastGravity.BOTTOM,
+                                                                        backgroundColor:
+                                                                            Colors.black,
+                                                                      );
+                                                                      await getCommentData();
+
+                                                                      setState(
+                                                                          () {});
+                                                                    }).catchError(
+                                                                            (error) {
+                                                                      print(
+                                                                          '문서 삭제 실패 : $error');
+                                                                    });
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .pop();
+                                                                  },
+                                                                  child:
+                                                                      const Text(
+                                                                    '삭제',
+                                                                    style:
+                                                                        TextStyle(
+                                                                      color: Colors
+                                                                          .red,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                TextButton(
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .pop();
+                                                                  },
+                                                                  child:
+                                                                      const Text(
+                                                                          '닫기'),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                              } else {
+                                                Fluttertoast.showToast(
+                                                  msg:
+                                                      "본인이 작성한 댓글만 삭제할 수 있습니다.",
+                                                  toastLength:
+                                                      Toast.LENGTH_LONG,
+                                                  gravity: ToastGravity.BOTTOM,
+                                                  backgroundColor: Colors.red,
+                                                );
+                                              }
+                                            } else {
+                                              print('null');
+                                            }
                                           });
-                                        } else {
-                                          Fluttertoast.showToast(
-                                            msg: "본인이 작성한 댓글만 삭제할 수 있습니다.",
-                                            toastLength: Toast.LENGTH_LONG,
-                                            gravity: ToastGravity.BOTTOM,
-                                            backgroundColor: Colors.red,
-                                          );
+                                        } on FirebaseException catch (e) {
+                                          print(e);
                                         }
                                       },
                                       child: const Icon(
