@@ -8,7 +8,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
-import 'package:google_fonts/google_fonts.dart';
 
 class PostDetailPage extends StatefulWidget {
   const PostDetailPage({Key? key, required this.documentId}) : super(key: key);
@@ -28,7 +27,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   final String documentId;
   static String result = "1";
   double fontSize = 15.0;
-  double minSize = 5.0;
+  double minSize = 12.0;
   double maxSize = 35.0;
 
   bool isRecommend = false;
@@ -1001,7 +1000,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                       },
                                       child: const Icon(
                                         Icons.dangerous_outlined,
-                                        color: Colors.red,
+                                        color: Colors.grey,
                                       ),
                                     )
                                   ],

@@ -38,7 +38,7 @@ class BoardScreen extends StatelessWidget {
               ),
             ),
             SizedBox(
-              height: Platform.isIOS ? height * 0.735 : height * 0.727,
+              height: Platform.isIOS ? height * 0.7 : height * 0.727,
               child: ListView.builder(
                 itemCount: 15, // 게시물 개수에 맞게 조정
                 itemBuilder: (context, index) {

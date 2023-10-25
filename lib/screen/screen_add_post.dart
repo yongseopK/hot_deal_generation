@@ -12,6 +12,8 @@ import 'package:intl/intl.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class AddPost extends StatefulWidget {
   const AddPost({super.key});
@@ -48,6 +50,27 @@ class _AddPostState extends State<AddPost> {
   final ImagePicker _picker = ImagePicker();
   List<XFile> _pickedImgs = [];
 
+  Future<void> checkAndRequestGalleryPermission() async {
+    var status = await Permission.photos.status;
+
+    if (status.isGranted) {
+      _pickImg();
+    } else if (status.isDenied) {
+      var result = await Permission.photos.request();
+
+      if (!result.isGranted) {
+        _pickImg();
+      } else {
+        Fluttertoast.showToast(
+          msg: "환경설정에서 직접 권한을 허용해주세요",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.red,
+        );
+      }
+    }
+  }
+
   Future<void> _pickImg() async {
     try {
       List<XFile>? images = await _picker.pickMultiImage();
@@ -58,6 +81,7 @@ class _AddPostState extends State<AddPost> {
         });
       }
     } catch (e) {
+      print(e);
       Fluttertoast.showToast(
           msg: "HDR 이미지는 사용할 수 없습니다.",
           toastLength: Toast.LENGTH_LONG,
@@ -128,7 +152,7 @@ class _AddPostState extends State<AddPost> {
     List<Widget> boxContents = [
       IconButton(
         onPressed: () {
-          _pickImg();
+          checkAndRequestGalleryPermission();
         },
         icon: Container(
           alignment: Alignment.center,
