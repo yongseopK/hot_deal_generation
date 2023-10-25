@@ -184,6 +184,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
         await getCommentData();
 
         commentTextController.clear();
+        commentText = "";
 
         setState(() {});
       }
@@ -730,6 +731,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             padding:
                                 const EdgeInsets.only(left: 20.0, right: 20.0),
                             child: TextFormField(
+                              validator: (val) =>
+                                  val == "" ? "댓글을 입력해주세요" : null,
                               controller: commentTextController,
                               enabled: loggedUser != null ? true : false,
                               onSaved: (value) {
@@ -761,8 +764,18 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           ),
                         ),
                         onPressed: () {
-                          loggedUser != null ? addComment() : null;
-                          setState(() {});
+                          if (loggedUser != null) {
+                            if (commentText.length >= 3) {
+                              addComment();
+                              setState(() {});
+                            } else {
+                              Fluttertoast.showToast(
+                                msg: "3글자 이상 입력해주세요",
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 2,
+                              );
+                            }
+                          }
                         },
                         child: SizedBox(
                           height: height * 0.1,
@@ -895,7 +908,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                                   height * 0.03,
                                                             ),
                                                             const Text(
-                                                              '게시물을 삭제하시겠습니까?',
+                                                              '댓글을 삭제하시겠습니까?',
                                                               style: TextStyle(
                                                                   fontSize: 17),
                                                             ),
