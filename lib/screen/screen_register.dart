@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get_utils/get_utils.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // ignore: duplicate_import
@@ -33,6 +34,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String confirmPassword = '';
 
   File? pickedImage;
+
+  dynamic findUserName;
 
   void _pickImage() async {
     final imagePicker = ImagePicker();
@@ -210,7 +213,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 },
                                 decoration: const InputDecoration(
                                   border: InputBorder.none,
-                                  hintText: '이름',
+                                  hintText: '닉네임',
                                 ),
                               ),
                             ),
@@ -316,6 +319,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   GestureDetector(
                     onTap: () async {
+                      final fb = FirebaseFirestore.instance;
+                      final CollectionReference fs = fb.collection('user');
+
+                      final QuerySnapshot userSnapshot = await FirebaseFirestore
+                          .instance
+                          .collection('user')
+                          .where('userName', isEqualTo: userName)
+                          .get();
+
+                      if (userSnapshot.docs.isNotEmpty) {
+                        for (final doc in userSnapshot.docs) {
+                          findUserName =
+                              (doc.data() as Map<String, dynamic>)['userName'];
+                        }
+                      }
+
                       setState(() {
                         showSpinner = true;
                       });
@@ -326,12 +345,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               showSpinner = false;
                             });
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('please pick your image'),
-                                backgroundColor: Colors.blue,
-                              ),
-                            );
+                            Fluttertoast.showToast(
+                                msg: "이미지를 선택해주세요",
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.CENTER,
+                                backgroundColor: Colors.red);
                             return;
                           }
                           // 폼이 유효한지 확인
@@ -350,21 +368,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             await refImage.putFile(pickedImage!);
                             final url = await refImage.getDownloadURL();
 
-                            await FirebaseFirestore.instance
-                                .collection('user')
-                                .doc(newUser.user!.uid)
-                                .set({
-                              'userName': userName,
-                              'email': userEmail,
-                              'picked_image': url,
-                            });
-                            if (newUser.user != null) {
-                              // ignore: use_build_context_synchronously
-                              for (var i = 0; i < 2; i++) {
+                            if (findUserName != userName) {
+                              await FirebaseFirestore.instance
+                                  .collection('user')
+                                  .doc(newUser.user!.uid)
+                                  .set({
+                                'userName': userName,
+                                'email': userEmail,
+                                'picked_image': url,
+                              });
+                              if (newUser.user != null) {
                                 // ignore: use_build_context_synchronously
-                                Navigator.pop(context);
+                                for (var i = 0; i < 2; i++) {
+                                  // ignore: use_build_context_synchronously
+                                  Navigator.pop(context);
+                                }
                               }
+                            } else {
+                              Fluttertoast.showToast(
+                                msg: "중복된 이름입니다.",
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.CENTER,
+                                backgroundColor: Colors.red,
+                              );
                             }
+
                             setState(() {
                               showSpinner = false;
                             });
@@ -381,8 +409,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               errorMessage = '잘못된 이메일 형식입니다.';
                             } else if (e.code == "internal-error") {
                               errorMessage = '잘못된 요청입니다.';
+                            } else if (e.code == "email-already-in-use") {
+                              errorMessage = '중복 이메일입니다.';
                             } else {
-                              errorMessage = '회원가입에 실패했습니다.';
+                              errorMessage = '알 수 없는 이유로 회원가입에 실패했습니다.';
                             }
                             Fluttertoast.showToast(
                               msg: errorMessage,
