@@ -386,6 +386,7 @@ class _AddPostState extends State<AddPost> {
                               'time': DateFormat('HH:mm').format(dt),
                               'viewCount': 0,
                               'recommendInfo': [],
+                              'commentCount': 0
                             })
                             .then((value) => print("업로드 성공"))
                             .catchError((error) => print("알 수 없는 오류 발생"));

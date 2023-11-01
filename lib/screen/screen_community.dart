@@ -5,6 +5,7 @@
 // import 'dart:ffi' as ffi;
 
 import 'dart:async';
+// import 'dart:html';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
@@ -32,6 +33,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   int totalDocumentCount = 0;
 
+  bool isLoading = true;
+
   List<String> documentTitles = [];
   List<String> documentTexts = [];
   List<String> documentThumbnails = [];
@@ -40,26 +43,25 @@ class _CommunityScreenState extends State<CommunityScreen> {
   List<String> documentDate = [];
   List<String> documentViewCount = [];
   List<String> documentRecomendCount = [];
-  List<String> commentCounts = [];
+  List<String> documentCommentCount = [];
 
-  Future<void> getDocumentDataAndCommentCount() async {
+  Future<void> getDocumentData() async {
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('BulletinBoard')
-          .orderBy('postNum', descending: true) // postNum 필드를 기준으로 정렬
+          .orderBy('postNum', descending: true)
           .get();
 
+      documentTitles.clear();
+      documentTexts.clear();
+      documentThumbnails.clear();
+      documentUserName.clear();
+      documentTime.clear();
+      documentDate.clear();
+      documentViewCount.clear();
+      documentRecomendCount.clear();
+      documentCommentCount.clear();
       if (querySnapshot.docs.isNotEmpty) {
-        documentTitles.clear(); // 목록을 초기화
-        documentTexts.clear();
-        documentThumbnails.clear();
-        documentUserName.clear();
-        documentTime.clear();
-        documentDate.clear();
-        documentViewCount.clear();
-        documentRecomendCount.clear();
-        commentCounts.clear(); // 댓글 수 목록 초기화
-
         for (QueryDocumentSnapshot document in querySnapshot.docs) {
           String title = document.get('title');
           String text = document.get('text');
@@ -70,6 +72,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
           int viewCount = document.get('viewCount');
           String parseViewCount = viewCount.toString();
           List<dynamic>? recommend = document['recommendInfo'];
+          int commentCount = document.get('commentCount');
+          String parseCommentCount = commentCount.toString();
 
           recommendLength = recommend!.length;
           String recommendCount =
@@ -86,37 +90,27 @@ class _CommunityScreenState extends State<CommunityScreen> {
           documentDate.add(date);
           documentViewCount.add(parseViewCount);
           documentRecomendCount.add(recommendCount);
-
-          print(recommendCount);
+          documentCommentCount.add(parseCommentCount);
+          print(documentCommentCount);
         }
       } else {
         print("컬렉션에 문서가 없음");
       }
-
-      // 댓글 개수 가져오는 부분
-      CollectionReference mainCollectionRef =
-          FirebaseFirestore.instance.collection('BulletinBoard');
-      QuerySnapshot mainCollectionSnapshot = await mainCollectionRef.get();
-
-      for (QueryDocumentSnapshot mainDoc in mainCollectionSnapshot.docs) {
-        String mainDocumentId = mainDoc.id; // 본 컬렉션 문서 ID
-
-        QuerySnapshot subcollectionSnapshot = await mainCollectionRef
-            .doc(mainDocumentId)
-            .collection('comments')
-            .orderBy('dateTime', descending: true)
-            .get();
-
-        String commentCount = subcollectionSnapshot.docs.length.toString();
-
-        // 서브컬렉션의 댓글 수를 commentCounts 리스트에 추가
-        commentCounts.add(commentCount);
-      }
-      print(commentCounts);
-
-      setState(() {});
     } catch (e) {
       print(e);
+    }
+  }
+
+  Future<void> loadDataInBackground() async {
+    try {
+      // await getCommentCounts();
+      await getDocumentData();
+    } catch (e) {
+      print(e);
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -124,7 +118,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
   void initState() {
     super.initState();
     getCurrentUser();
-    getDocumentDataAndCommentCount();
+    loadDataInBackground();
   }
 
   void getCurrentUser() {
@@ -185,7 +179,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
         )
             .then((result) async {
           if (result == "1") {
-            await getDocumentDataAndCommentCount();
+            await getDocumentData();
             setState(() {});
           }
         });
@@ -201,194 +195,213 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
     return SafeArea(
       child: Scaffold(
-        body: FutureBuilder<int>(
-          future: getDocumentCountInCollection(), // 문서 개수를 가져오는 비동기 함수 호출
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(),
-                    ],
-                  ),
-                ],
-              ); // 데이터가 로드되기를 기다릴 동안 로딩 표시
-            } else {
-              if (snapshot.hasError) {
-                return Text('에러 발생: ${snapshot.error}');
-              } else {
-                return SizedBox(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      await getDocumentDataAndCommentCount();
-                      setState(() {});
-                    },
-                    child: documentTitles.isNotEmpty
-                        ? ListView.builder(
-                            itemCount:
-                                documentTitles.length, // 게시물 개수에 문서 개수를 할당
-                            itemBuilder: (context, index) {
-                              return GestureDetector(
-                                onTap: () {
-                                  print('인덱스 : $index');
-                                  if (!isNavigatingToDetail) {
-                                    isNavigatingToDetail = true;
-                                    _navigateToPostDetail(context, index);
+        body: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : FutureBuilder<int>(
+                future: getDocumentCountInCollection(), // 문서 개수를 가져오는 비동기 함수 호출
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                          ],
+                        ),
+                      ],
+                    ); // 데이터가 로드되기를 기다릴 동안 로딩 표시
+                  } else {
+                    if (snapshot.hasError) {
+                      return Text('에러 발생: ${snapshot.error}');
+                    } else {
+                      return SizedBox(
+                        child: RefreshIndicator(
+                          onRefresh: () async {
+                            QuerySnapshot querySnapshot =
+                                await FirebaseFirestore.instance
+                                    .collection('BulletinBoard')
+                                    .orderBy('postNum', descending: true)
+                                    .get();
+                            print('타일 개수:  ${querySnapshot.docs.length}');
+                            loadDataInBackground();
+                            setState(() {
+                              isLoading = false;
+                            });
+                          },
+                          child: documentTitles.isNotEmpty
+                              ? ListView.builder(
+                                  itemCount: documentTitles.length,
+                                  itemBuilder: (context, index) {
+                                    return GestureDetector(
+                                      onTap: () {
+                                        print('인덱스 : $index');
+                                        if (!isNavigatingToDetail) {
+                                          isNavigatingToDetail = true;
+                                          _navigateToPostDetail(context, index);
 
-                                    Timer(const Duration(seconds: 1), () {
-                                      isNavigatingToDetail = false;
-                                    });
-                                  }
-                                },
-                                child: Card(
-                                  margin: const EdgeInsets.all(2.0),
-                                  child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(
-                                        vertical: 10, horizontal: 15),
-                                    title: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  documentTitles[index],
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 18,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: width * 0.03,
-                                                ),
-                                                documentThumbnails.isNotEmpty &&
-                                                        documentThumbnails[
-                                                                index]
-                                                            .isNotEmpty
-                                                    ? Image.asset(
-                                                        'images/imageicon.png',
-                                                        width: width * 0.04,
-                                                      )
-                                                    : const SizedBox(width: 10),
-                                              ],
-                                            ),
-                                            SizedBox(
-                                              height: height * 0.007,
-                                            ),
-                                            Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                Text(
-                                                  documentUserName[index],
-                                                  style: const TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 15,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: width * 0.02,
-                                                ),
-                                                Text(
-                                                  '조회 ${documentViewCount[index]}',
-                                                  style: const TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 15,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: width * 0.02,
-                                                ),
-                                                Text(
-                                                  documentDate[index],
-                                                  style: const TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 15,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  width: width * 0.01,
-                                                ),
-                                                Text(
-                                                  documentTime[index],
-                                                  style: const TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 15,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        Container(
-                                          width: width * 0.18,
-                                          padding:
-                                              EdgeInsets.all(width * 0.015),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[200],
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            border: Border.all(
-                                              color: Colors.grey.shade400,
-                                            ),
-                                          ),
-                                          child: Column(
+                                          Timer(const Duration(seconds: 1), () {
+                                            isNavigatingToDetail = false;
+                                          });
+                                        }
+                                      },
+                                      child: Card(
+                                        margin: const EdgeInsets.all(2.0),
+                                        child: ListTile(
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                  vertical: 10, horizontal: 15),
+                                          title: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceAround,
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
                                                 children: [
-                                                  const Icon(
-                                                    CupertinoIcons
-                                                        .chat_bubble_2,
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        documentTitles[index],
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 18,
+                                                        ),
+                                                      ),
+                                                      SizedBox(
+                                                        width: width * 0.03,
+                                                      ),
+                                                      documentThumbnails
+                                                                  .isNotEmpty &&
+                                                              documentThumbnails[
+                                                                      index]
+                                                                  .isNotEmpty
+                                                          ? Image.asset(
+                                                              'images/imageicon.png',
+                                                              width:
+                                                                  width * 0.04,
+                                                            )
+                                                          : const SizedBox(
+                                                              width: 10),
+                                                    ],
                                                   ),
-                                                  Text(commentCounts.isNotEmpty
-                                                      ? commentCounts[index]
-                                                      : '0'),
+                                                  SizedBox(
+                                                    height: height * 0.007,
+                                                  ),
+                                                  Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Text(
+                                                        documentUserName[index],
+                                                        style: const TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize: 15,
+                                                        ),
+                                                      ),
+                                                      SizedBox(
+                                                        width: width * 0.02,
+                                                      ),
+                                                      Text(
+                                                        '조회 ${documentViewCount[index]}',
+                                                        style: const TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize: 15,
+                                                        ),
+                                                      ),
+                                                      SizedBox(
+                                                        width: width * 0.02,
+                                                      ),
+                                                      Text(
+                                                        documentDate[index],
+                                                        style: const TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize: 15,
+                                                        ),
+                                                      ),
+                                                      SizedBox(
+                                                        width: width * 0.01,
+                                                      ),
+                                                      Text(
+                                                        documentTime[index],
+                                                        style: const TextStyle(
+                                                          color: Colors.grey,
+                                                          fontSize: 15,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
                                                 ],
                                               ),
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceAround,
-                                                children: [
-                                                  const Icon(Icons
-                                                      .thumb_up_alt_outlined),
-                                                  Text(documentRecomendCount[
-                                                      index]),
-                                                ],
+                                              Container(
+                                                width: width * 0.18,
+                                                padding: EdgeInsets.all(
+                                                    width * 0.015),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[200],
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: Colors.grey.shade400,
+                                                  ),
+                                                ),
+                                                child: Column(
+                                                  children: [
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceAround,
+                                                      children: [
+                                                        const Icon(
+                                                          CupertinoIcons
+                                                              .chat_bubble_2,
+                                                        ),
+                                                        Text(
+                                                            documentCommentCount[
+                                                                index]),
+                                                      ],
+                                                    ),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceAround,
+                                                      children: [
+                                                        const Icon(Icons
+                                                            .thumb_up_alt_outlined),
+                                                        Text(
+                                                            documentRecomendCount[
+                                                                index]),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                               ),
                                             ],
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : const Center(
+                                  child: Text(
+                                    '게시물이 없습니다.',
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
-                              );
-                            },
-                          )
-                        : const Center(
-                            child: Text(
-                              '게시물이 없습니다.',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                  ),
-                );
-              }
-            }
-          },
-        ),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
         floatingActionButton: loggedUser != null
             ? FloatingActionButton(
                 onPressed: () {
@@ -399,7 +412,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     ),
                   ).then((result) async {
                     if (result == "1") {
-                      await getDocumentDataAndCommentCount();
+                      // await getCommentCounts();
+                      await getDocumentData();
                       setState(() {});
                     }
                   });

@@ -156,6 +156,11 @@ class _PostDetailPageState extends State<PostDetailPage> {
     final currentDocument = FirebaseFirestore.instance
         .collection('BulletinBoard')
         .doc(widget.documentId);
+
+    DocumentReference documentReference =
+        FirebaseFirestore.instance.collection('BulletinBoard').doc(documentId);
+    DocumentSnapshot documentSnapshot = await documentReference.get();
+
     try {
       if (loggedUser != null) {
         final user = FirebaseAuth.instance.currentUser;
@@ -179,6 +184,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
         };
 
         await currentDocument.collection('comments').add(commentData);
+
+        int commentCount = documentSnapshot.get('commentCount');
+        int newCommentCount = commentCount + 1;
+
+        await documentReference.update({'commentCount': newCommentCount});
+        print('댓글 개수 : $commentCount');
 
         await getCommentData();
 
@@ -205,6 +216,17 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
     try {
       if (currentUserName == userName) {
+        CollectionReference subCollectionRef = FirebaseFirestore.instance
+            .collection('BulletinBoard')
+            .doc(documentId)
+            .collection('comments');
+
+        QuerySnapshot subCollectionSnapshot = await subCollectionRef.get();
+
+        for (QueryDocumentSnapshot doc in subCollectionSnapshot.docs) {
+          await subCollectionRef.doc(doc.id).delete();
+        }
+
         await FirebaseFirestore.instance
             .collection('BulletinBoard')
             .doc(documentId)
@@ -939,6 +961,30 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                                                             Colors.black,
                                                                       );
                                                                       await getCommentData();
+
+                                                                      DocumentReference documentReference = FirebaseFirestore
+                                                                          .instance
+                                                                          .collection(
+                                                                              'BulletinBoard')
+                                                                          .doc(
+                                                                              documentId);
+                                                                      DocumentSnapshot
+                                                                          documentSnapshot =
+                                                                          await documentReference
+                                                                              .get();
+
+                                                                      int commentCount =
+                                                                          documentSnapshot
+                                                                              .get('commentCount');
+                                                                      int newCommentCount =
+                                                                          commentCount -
+                                                                              1;
+
+                                                                      await documentReference
+                                                                          .update({
+                                                                        'commentCount':
+                                                                            newCommentCount
+                                                                      });
 
                                                                       setState(
                                                                           () {});
