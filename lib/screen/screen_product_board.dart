@@ -1,45 +1,84 @@
-import 'package:flutter/material.dart';
+// ignore_for_file: avoid_print
 
-class ProductBoard extends StatelessWidget {
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:hot_deal_generation/screen/screen_add_post.dart';
+
+class ProductBoard extends StatefulWidget {
   const ProductBoard({Key? key, this.data}) : super(key: key);
 
   final dynamic data;
 
+  static const Map<String, String> dataToTitle = {
+    "computer": "컴퓨터",
+    "labtop": "노트북",
+    "mobile": "스마트폰",
+    "tablet": "태블릿",
+    "wearable": "웨어러블",
+    "mouse": "마우스",
+    "keyboard": "키보드",
+    "soundSystem": "음향기기",
+    "cpu": "CPU",
+    "gpu": "그래픽 카드",
+    "ram": "램",
+    "storage": "저장장치",
+    "power": "파워",
+    "case": "케이스",
+  };
+
+  @override
+  State<ProductBoard> createState() => _ProductBoardState();
+}
+
+class _ProductBoardState extends State<ProductBoard> {
+  final _authentication = FirebaseAuth.instance;
+  User? loggedUser;
+
+  void getCurrentUser() {
+    try {
+      final user = _authentication.currentUser;
+      if (user != null) {
+        loggedUser = user;
+        print(loggedUser!.email);
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentUser();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final title = ProductBoard.dataToTitle[widget.data];
     return Scaffold(
       appBar: AppBar(
-        title: data == "computer"
-            ? const Text("컴퓨터")
-            : data == "labtop"
-                ? const Text("노트북")
-                : data == "mobile"
-                    ? const Text("스마트폰")
-                    : data == "tablet"
-                        ? const Text("태블릿")
-                        : data == "wearable"
-                            ? const Text("웨어러블")
-                            : data == "mouse"
-                                ? const Text("마우스")
-                                : data == "keyboard"
-                                    ? const Text("키보드")
-                                    : data == "soundSystem"
-                                        ? const Text("음향기기")
-                                        : data == "cpu"
-                                            ? const Text("CPU")
-                                            : data == "gpu"
-                                                ? const Text("그래픽 카드")
-                                                : data == "ram"
-                                                    ? const Text("램")
-                                                    : data == "storage"
-                                                        ? const Text("저장장치")
-                                                        : data == "power"
-                                                            ? const Text("파워")
-                                                            : data == "case "
-                                                                ? const Text(
-                                                                    "케이스")
-                                                                : null,
+        backgroundColor: Colors.black,
+        elevation: 0.0,
+        title: title != null ? Text(title) : null,
       ),
+      floatingActionButton: loggedUser != null
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddPost(),
+                  ),
+                ).then((result) async {
+                  if (result == "1") {
+                    setState(() {});
+                  }
+                });
+              },
+              backgroundColor: Colors.black,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }

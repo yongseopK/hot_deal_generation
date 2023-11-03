@@ -15,8 +15,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const GetMaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Hot Deal Generation',
-        home: HomeScreen());
+        debugShowCheckedModeBanner: false, title: '핫딜시대', home: HomeScreen());
   }
 }

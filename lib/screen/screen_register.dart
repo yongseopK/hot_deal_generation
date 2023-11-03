@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:get/get_utils/get_utils.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // ignore: duplicate_import
@@ -319,9 +318,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   GestureDetector(
                     onTap: () async {
-                      final fb = FirebaseFirestore.instance;
-                      final CollectionReference fs = fb.collection('user');
-
                       final QuerySnapshot userSnapshot = await FirebaseFirestore
                           .instance
                           .collection('user')
@@ -354,21 +350,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           }
                           // 폼이 유효한지 확인
                           try {
-                            UserCredential newUser = await FirebaseAuth.instance
-                                .createUserWithEmailAndPassword(
-                              email: userEmail,
-                              password: userPassword,
-                            );
-
-                            final refImage = FirebaseStorage.instance
-                                .ref()
-                                .child('picked_imaged')
-                                .child('${newUser.user!.uid}.png');
-
-                            await refImage.putFile(pickedImage!);
-                            final url = await refImage.getDownloadURL();
-
                             if (findUserName != userName) {
+                              UserCredential newUser = await FirebaseAuth
+                                  .instance
+                                  .createUserWithEmailAndPassword(
+                                email: userEmail,
+                                password: userPassword,
+                              );
+
+                              final refImage = FirebaseStorage.instance
+                                  .ref()
+                                  .child('picked_imaged')
+                                  .child('${newUser.user!.uid}.png');
+
+                              await refImage.putFile(pickedImage!);
+                              final url = await refImage.getDownloadURL();
                               await FirebaseFirestore.instance
                                   .collection('user')
                                   .doc(newUser.user!.uid)

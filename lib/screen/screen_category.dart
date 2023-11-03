@@ -7,9 +7,14 @@ class CategoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Size screenSize = MediaQuery.of(context).size;
-    double width = screenSize.width;
-    double height = screenSize.height;
+    void navigatePage(dynamic data) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProductBoard(data: data),
+        ),
+      );
+    }
 
     return WillPopScope(
       onWillPop: () async => false,
@@ -27,13 +32,7 @@ class CategoryScreen extends StatelessWidget {
                     categories: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "computer"),
-                            ),
-                          );
+                          navigatePage("computer");
                         },
                         child: _buildCategory(
                           title: '컴퓨터',
@@ -44,13 +43,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "labtop"),
-                            ),
-                          );
+                          navigatePage("labtop");
                         },
                         child: _buildCategory(
                           title: '노트북',
@@ -61,13 +54,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "mobile"),
-                            ),
-                          );
+                          navigatePage("mobile");
                         },
                         child: _buildCategory(
                           title: '스마트폰',
@@ -78,13 +65,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "tablet"),
-                            ),
-                          );
+                          navigatePage("tablet");
                         },
                         child: _buildCategory(
                           title: '태블릿',
@@ -95,13 +76,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "wearable"),
-                            ),
-                          );
+                          navigatePage("wearable");
                         },
                         child: _buildCategory(
                           title: '웨어러블',
@@ -117,13 +92,7 @@ class CategoryScreen extends StatelessWidget {
                     categories: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "mouse"),
-                            ),
-                          );
+                          navigatePage("mouse");
                         },
                         child: _buildCategory(
                           title: '마우스',
@@ -134,13 +103,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "keyboard"),
-                            ),
-                          );
+                          navigatePage("keyboard");
                         },
                         child: _buildCategory(
                           title: '키보드',
@@ -151,13 +114,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "soundSystem"),
-                            ),
-                          );
+                          navigatePage("soundSystem");
                         },
                         child: _buildCategory(
                           title: '음향기기',
@@ -173,13 +130,7 @@ class CategoryScreen extends StatelessWidget {
                     categories: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "cpu"),
-                            ),
-                          );
+                          navigatePage("cpu");
                         },
                         child: _buildCategory(
                           title: 'CPU',
@@ -190,13 +141,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "gpu"),
-                            ),
-                          );
+                          navigatePage("gpu");
                         },
                         child: _buildCategory(
                           title: '그래픽 카드',
@@ -207,13 +152,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "ram"),
-                            ),
-                          );
+                          navigatePage("ram");
                         },
                         child: _buildCategory(
                           title: '램',
@@ -224,13 +163,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "storage"),
-                            ),
-                          );
+                          navigatePage("storage");
                         },
                         child: _buildCategory(
                           title: '저장장치',
@@ -241,13 +174,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "power"),
-                            ),
-                          );
+                          navigatePage("power");
                         },
                         child: _buildCategory(
                           title: '파워',
@@ -258,13 +185,7 @@ class CategoryScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const ProductBoard(data: "case"),
-                            ),
-                          );
+                          navigatePage("case");
                         },
                         child: _buildCategory(
                           title: '케이스',
