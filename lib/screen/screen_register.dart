@@ -232,6 +232,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: Padding(
                               padding: const EdgeInsets.only(left: 20.0),
                               child: TextFormField(
+                                keyboardType: TextInputType.emailAddress,
                                 validator: (val) =>
                                     val == "" ? "Please enter email" : null,
                                 onSaved: (value) {
