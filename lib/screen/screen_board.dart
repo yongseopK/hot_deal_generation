@@ -31,7 +31,7 @@ class BoardScreen extends StatelessWidget {
                     width: 10,
                   ),
                   Text(
-                    "금주의 Hot Deal",
+                    "베스트셀러",
                     style: GoogleFonts.doHyeon(fontSize: 30),
                   ),
                 ],

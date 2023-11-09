@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, unnecessary_null_comparison
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,6 +23,12 @@ class PostDetailPage extends StatefulWidget {
 class _PostDetailPageState extends State<PostDetailPage> {
   final _authentication = FirebaseAuth.instance;
   User? loggedUser = FirebaseAuth.instance.currentUser;
+
+  bool isButtonDisabled = false;
+
+  void enableButton() {
+    isButtonDisabled = false;
+  }
 
   final String documentId;
   static String result = "1";
@@ -785,10 +791,17 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           ),
                         ),
                         onPressed: () {
+                          if (isButtonDisabled) {
+                            return;
+                          }
                           if (loggedUser != null) {
                             if (commentText.length >= 3) {
+                              setState(() {
+                                isButtonDisabled = true;
+                              });
                               addComment();
-                              setState(() {});
+
+                              Timer(const Duration(seconds: 1), enableButton);
                             } else {
                               Fluttertoast.showToast(
                                 msg: "3글자 이상 입력해주세요",

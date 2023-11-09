@@ -1,13 +1,20 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, unnecessary_string_interpolations
 
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hot_deal_generation/screen/screen_add_product.dart';
+import 'package:hot_deal_generation/screen/screen_product_detail.dart';
+import 'package:intl/intl.dart';
 
 class ProductBoard extends StatefulWidget {
-  const ProductBoard({Key? key, this.data}) : super(key: key);
+  const ProductBoard({Key? key, this.data, this.title}) : super(key: key);
 
   final String? data;
+  final String? title;
 
   static const Map<String, String> dataToTitle = {
     "computer": "컴퓨터",
@@ -33,6 +40,11 @@ class ProductBoard extends StatefulWidget {
 class _ProductBoardState extends State<ProductBoard> {
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
+  String? title;
+
+  bool isLoading = false;
+
+  final NumberFormat currencyFormat = NumberFormat("#,##0", "en_US");
 
   void getCurrentUser() {
     try {
@@ -50,6 +62,8 @@ class _ProductBoardState extends State<ProductBoard> {
   void initState() {
     super.initState();
     getCurrentUser();
+    title = ProductBoard.dataToTitle[widget.data];
+    getDocumentData(title);
   }
 
   void navigateToAddProduct(String data) {
@@ -58,7 +72,155 @@ class _ProductBoardState extends State<ProductBoard> {
       MaterialPageRoute(
         builder: (context) => AddProduct(data: data),
       ),
-    );
+    ).then((result) async {
+      if (result == "1") {
+        // await getCommentCounts();
+        await getDocumentData(title);
+        setState(() {});
+      }
+    });
+  }
+
+  int recommendLength = 0;
+
+  bool isNavigatingToDetail = false;
+
+  List<String> productPlatform = [];
+  List<String> productTitles = [];
+  List<String> productTexts = [];
+  List<String> productThumbnails = [];
+  List<String> productUserName = [];
+  List<String> productTime = [];
+  List<String> productDate = [];
+  List<String> productViewCount = [];
+  List<String> productRecomendCount = [];
+  List<String> productCommentCount = [];
+  List<String> productLinks = [];
+  List<String> productDeliveryFees = [];
+  List<String> productPrices = [];
+
+  Future<void> getDocumentData(String? title) async {
+    try {
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('Product')
+          .where('category', isEqualTo: title)
+          .orderBy('postNum', descending: true)
+          .get();
+
+      productPrices.clear();
+      productPlatform.clear();
+      productTitles.clear();
+      productTexts.clear();
+      productThumbnails.clear();
+      productUserName.clear();
+      productTime.clear();
+      productDate.clear();
+      productViewCount.clear();
+      productRecomendCount.clear();
+      productCommentCount.clear();
+      productLinks.clear();
+      productDeliveryFees.clear();
+      if (querySnapshot.docs.isNotEmpty) {
+        for (QueryDocumentSnapshot document in querySnapshot.docs) {
+          String platform = document.get('platform');
+          String title = document.get('title');
+          String text = document.get('text');
+          List<dynamic>? imageUrls = document.get('imageUrls');
+          String userName = document.get('userName');
+          String time = document.get('time');
+          String date = document.get('date');
+          int viewCount = document.get('viewCount');
+          String parseViewCount = viewCount.toString();
+          List<dynamic>? recommend = document['recommendInfo'];
+          int commentCount = document.get('commentCount');
+          String parseCommentCount = commentCount.toString();
+          String link = document.get('link');
+          int deliveryFees = document.get('deliveryFee');
+          String parseDeliveryFees = deliveryFees.toString();
+          int productPrice = document.get('price');
+          String parseProductPrice = productPrice.toString();
+
+          recommendLength = recommend!.length;
+          String recommendCount =
+              recommend.isNotEmpty ? recommendLength.toString() : "0";
+
+          String image =
+              imageUrls != null && imageUrls.isNotEmpty ? imageUrls[0] : '';
+
+          productPlatform.add(platform);
+          productTitles.add(title);
+          productTexts.add(text);
+          productThumbnails.add(image);
+          productUserName.add(userName);
+          productTime.add(time);
+          productDate.add(date);
+          productViewCount.add(parseViewCount);
+          productRecomendCount.add(recommendCount);
+          productCommentCount.add(parseCommentCount);
+          productLinks.add(link);
+          productDeliveryFees.add(parseDeliveryFees);
+          productPrices.add(parseProductPrice);
+        }
+      } else {
+        print("컬렉션에 문서가 없음");
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  // 클릭한 게시물의 Firestore 문서 ID 가져오기
+  void _navigateToPostDetail(
+      BuildContext context, int postIndex, String? title) async {
+    DocumentSnapshot document = await FirebaseFirestore.instance
+        .collection('Product')
+        .where('category', isEqualTo: title)
+        .orderBy('postNum', descending: true)
+        .get()
+        .then((querySnapshot) => querySnapshot.docs[postIndex]);
+
+    if (document.exists) {
+      String documentId = document.id;
+
+      // Firestore에서 해당 문서를 가져옵니다.
+      DocumentReference documentReference =
+          FirebaseFirestore.instance.collection('Product').doc(documentId);
+      DocumentSnapshot documentSnapshot = await documentReference.get();
+
+      if (documentSnapshot.exists) {
+        // 현재 조회수를 가져와서 1 증가시킵니다.
+        int currentViewCount = documentSnapshot.get('viewCount') ?? 0;
+        int newViewCount = currentViewCount + 1;
+
+        // Firestore에 업데이트된 조회수를 저장합니다.
+        await documentReference.update({'viewCount': newViewCount});
+
+        // 게시물 상세 화면으로 이동합니다.
+        Navigator.of(context)
+            .push(
+          MaterialPageRoute(
+            builder: (context) => ProductDetail(documentId: documentId),
+          ),
+        )
+            .then((result) async {
+          if (result == "1") {
+            await getDocumentData(title);
+            setState(() {});
+          }
+        });
+      }
+    }
+  }
+
+  Future<int> getDocumentCountInCollection(String? title) async {
+    CollectionReference collectionRef =
+        FirebaseFirestore.instance.collection('Product');
+
+    QuerySnapshot querySnapshot =
+        await collectionRef.where("category", isEqualTo: title).get();
+    int documentCount = querySnapshot.docs.length;
+
+    return documentCount;
   }
 
   @override
@@ -74,38 +236,275 @@ class _ProductBoardState extends State<ProductBoard> {
         elevation: 0.0,
         title: title != null ? Text(title) : null,
       ),
-      body: ListView.builder(
-        itemCount: 15, // 게시물 개수에 맞게 조정
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              // _navigateToPostDetail(context, index);
-            },
-            child: Card(
-              margin: const EdgeInsets.all(2.0),
-              child: ListTile(
-                leading: Image.asset(
-                  'images/fifalogo.png', // 게시물 이미지
-                  width: width * 0.1,
-                  height: height * 0.1,
-                  // fit: BoxFit.cover,
-                ),
-                title: Text(
-                  '게시물 제목 $index', // 게시물 제목
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
-                ),
-                subtitle: Text(
-                  '게시물 내용 $index', // 게시물 내용
-                  style: const TextStyle(fontSize: 15),
-                ),
-              ),
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : FutureBuilder<int>(
+              future:
+                  getDocumentCountInCollection(title), // 문서 개수를 가져오는 비동기 함수 호출
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                        ],
+                      ),
+                    ],
+                  ); // 데이터가 로드되기를 기다릴 동안 로딩 표시
+                } else {
+                  if (snapshot.hasError) {
+                    return Text('에러 발생: ${snapshot.error}');
+                  } else {
+                    return SizedBox(
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          getDocumentData(title);
+                          setState(() {
+                            isLoading = false;
+                          });
+                        },
+                        child: productTitles.isNotEmpty
+                            ? ListView.builder(
+                                itemCount: productTitles.length,
+                                itemBuilder: (context, index) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      print('인덱스 : $index');
+                                      if (!isNavigatingToDetail) {
+                                        isNavigatingToDetail = true;
+                                        _navigateToPostDetail(
+                                            context, index, title);
+
+                                        Timer(const Duration(seconds: 1), () {
+                                          isNavigatingToDetail = false;
+                                        });
+                                      }
+                                    },
+                                    child: Card(
+                                      margin: const EdgeInsets.all(2.0),
+                                      child: ListTile(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                vertical: 5, horizontal: 15),
+                                        title: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        Text(
+                                                          '[${productPlatform[index]}]',
+                                                          style:
+                                                              const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 18,
+                                                          ),
+                                                        ),
+                                                        SizedBox(
+                                                          width: width * 0.01,
+                                                        ),
+                                                        Text(
+                                                          productTitles[index]
+                                                                      .length >
+                                                                  20
+                                                              ? '${productTitles[index].substring(0, 10)}...'
+                                                              : productTitles[
+                                                                  index],
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 18,
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                    SizedBox(
+                                                      width: width * 0.03,
+                                                    ),
+                                                    productThumbnails
+                                                                .isNotEmpty &&
+                                                            productThumbnails[
+                                                                    index]
+                                                                .isNotEmpty
+                                                        ? Image.asset(
+                                                            'images/imageicon.png',
+                                                            width: width * 0.04,
+                                                          )
+                                                        : const SizedBox(
+                                                            width: 10),
+                                                  ],
+                                                ),
+                                                SizedBox(
+                                                  height: height * 0.003,
+                                                ),
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  children: [
+                                                    const Text(
+                                                      '가격 ',
+                                                      style: TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 15,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '₩${currencyFormat.format(int.parse(productPrices[index]))}',
+                                                      style: const TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.cyan,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: width * 0.01,
+                                                    ),
+                                                    const Text(
+                                                      '배송비 ',
+                                                      style: TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 15,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '₩${currencyFormat.format(int.parse((productDeliveryFees[index])))}',
+                                                      style: const TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.black,
+                                                      ),
+                                                    )
+                                                  ],
+                                                ),
+                                                SizedBox(
+                                                  height: height * 0.003,
+                                                ),
+                                                Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      productUserName[index],
+                                                      style: const TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 15,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: width * 0.02,
+                                                    ),
+                                                    Text(
+                                                      '조회 ${productViewCount[index]}',
+                                                      style: const TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 15,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: width * 0.02,
+                                                    ),
+                                                    Text(
+                                                      productDate[index],
+                                                      style: const TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 15,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: width * 0.01,
+                                                    ),
+                                                    Text(
+                                                      productTime[index],
+                                                      style: const TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 15,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: width * 0.03,
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          CupertinoIcons
+                                                              .chat_bubble_2,
+                                                          size: height * 0.02,
+                                                        ),
+                                                        Text(
+                                                          productCommentCount[
+                                                              index],
+                                                          style:
+                                                              const TextStyle(
+                                                            color: Colors.grey,
+                                                            fontSize: 15,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    SizedBox(
+                                                      width: width * 0.02,
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons
+                                                              .thumb_up_alt_outlined,
+                                                          size: height * 0.02,
+                                                        ),
+                                                        Text(
+                                                          productRecomendCount[
+                                                              index],
+                                                          style:
+                                                              const TextStyle(
+                                                            color: Colors.grey,
+                                                            fontSize: 15,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : const Center(
+                                child: Text(
+                                  '게시물이 없습니다.',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                // child: IconButton(
+                                //     onPressed: () async {
+                                //       print(title);
+                                //       await getDocumentData(title);
+                                //       setState(() {});
+                                //     },
+                                //     icon: const Icon(Icons.abc)),
+                              ),
+                      ),
+                    );
+                  }
+                }
+              },
             ),
-          );
-        },
-      ),
       floatingActionButton:
           loggedUser != null ? buildFloatingActionButton(widget.data) : null,
     );

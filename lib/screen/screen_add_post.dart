@@ -347,58 +347,84 @@ class _AddPostState extends State<AddPost> {
                   ),
                   GestureDetector(
                     onTap: () async {
-                      setState(() {
-                        showSpinner = true;
-                      });
-                      try {
-                        final user = FirebaseAuth.instance.currentUser;
-                        final userData = await FirebaseFirestore.instance
-                            .collection('user')
-                            .doc(user!.uid)
-                            .get();
+                      if (postTitle.isNotEmpty && postText.isNotEmpty) {
+                        setState(() {
+                          showSpinner = true;
+                        });
+                        try {
+                          final user = FirebaseAuth.instance.currentUser;
+                          final userData = await FirebaseFirestore.instance
+                              .collection('user')
+                              .doc(user!.uid)
+                              .get();
 
-                        List<String> imageUrls = [];
+                          List<String> imageUrls = [];
 
-                        // 이미지 업로드 및 URL 가져오기
-                        for (var image in _pickedImgs) {
-                          String imageUrl =
-                              await _uploadImageToFirebaseStorage(image);
-                          imageUrls.add(imageUrl); // 이미지 URL을 목록에 추가
+                          // 이미지 업로드 및 URL 가져오기
+                          for (var image in _pickedImgs) {
+                            String imageUrl =
+                                await _uploadImageToFirebaseStorage(image);
+                            imageUrls.add(imageUrl); // 이미지 URL을 목록에 추가
+                          }
+
+                          // 가장 큰 postNum 값을 가져와서 1을 더한 후 새로운 문서에 부여
+                          int latestPostNum = await _getLatestPostNum();
+                          int newPostNum = latestPostNum + 1;
+
+                          DateTime dt = DateTime.now();
+
+                          // Firestore에 게시물 데이터 추가
+                          await FirebaseFirestore.instance
+                              .collection('BulletinBoard')
+                              .add({
+                                'postNum': newPostNum,
+                                'title': postTitle,
+                                'text': postText,
+                                'userName': userData.data()!['userName'],
+                                'imageUrls': imageUrls, // 이미지 URL 목록을 추가
+                                'date': DateFormat('yyyy-MM-dd').format(dt),
+                                'time': DateFormat('HH:mm').format(dt),
+                                'viewCount': 0,
+                                'recommendInfo': [],
+                                'commentCount': 0
+                              })
+                              .then((value) => print("업로드 성공"))
+                              .catchError((error) => print("알 수 없는 오류 발생"));
+
+                          // 이미지 업로드가 완료된 후에만 Toast 메시지를 표시
+                          if (postTitle.isNotEmpty && !isToastVisible) {
+                            showToastMessage("게시물 작성이 완료되었습니다.");
+                            isToastVisible = true;
+                            // ignore: use_build_context_synchronously
+                            Navigator.pop(context, result);
+                          }
+                        } on FirebaseException catch (e) {
+                          print(e);
                         }
-
-                        // 가장 큰 postNum 값을 가져와서 1을 더한 후 새로운 문서에 부여
-                        int latestPostNum = await _getLatestPostNum();
-                        int newPostNum = latestPostNum + 1;
-
-                        DateTime dt = DateTime.now();
-
-                        // Firestore에 게시물 데이터 추가
-                        await FirebaseFirestore.instance
-                            .collection('BulletinBoard')
-                            .add({
-                              'postNum': newPostNum,
-                              'title': postTitle,
-                              'text': postText,
-                              'userName': userData.data()!['userName'],
-                              'imageUrls': imageUrls, // 이미지 URL 목록을 추가
-                              'date': DateFormat('yyyy-MM-dd').format(dt),
-                              'time': DateFormat('HH:mm').format(dt),
-                              'viewCount': 0,
-                              'recommendInfo': [],
-                              'commentCount': 0
-                            })
-                            .then((value) => print("업로드 성공"))
-                            .catchError((error) => print("알 수 없는 오류 발생"));
-
-                        // 이미지 업로드가 완료된 후에만 Toast 메시지를 표시
-                        if (postTitle.isNotEmpty && !isToastVisible) {
-                          showToastMessage("게시물 작성이 완료되었습니다.");
-                          isToastVisible = true;
-                          // ignore: use_build_context_synchronously
-                          Navigator.pop(context, result);
+                      } else {
+                        if (postTitle.isEmpty && postText.isEmpty) {
+                          Fluttertoast.showToast(
+                            msg: "제목과 내용을 입력해주세요.",
+                            toastLength: Toast.LENGTH_LONG,
+                            gravity: ToastGravity.CENTER,
+                            backgroundColor: Colors.red,
+                          );
+                        } else if (postTitle.isEmpty) {
+                          Fluttertoast.showToast(
+                            msg: "제목을 입력해주세요.",
+                            toastLength: Toast.LENGTH_LONG,
+                            gravity: ToastGravity.CENTER,
+                            backgroundColor: Colors.red,
+                          );
+                        } else if (postText.isEmpty) {
+                          Fluttertoast.showToast(
+                            msg: "내용을 입력해주세요.",
+                            toastLength: Toast.LENGTH_LONG,
+                            gravity: ToastGravity.CENTER,
+                            backgroundColor: Colors.red,
+                          );
                         }
-                      } on FirebaseException catch (e) {
-                        print(e);
+                        return;
                       }
                     },
                     child: Padding(
