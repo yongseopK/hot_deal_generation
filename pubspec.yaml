@@ -54,6 +54,7 @@ dependencies:
   screenshot:
   image_gallery_saver:
   permission_handler:
+  flutter_image_compress:
 
 dev_dependencies:
   flutter_test:

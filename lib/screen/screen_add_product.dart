@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print
 
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -8,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -157,10 +159,24 @@ class _AddProductState extends State<AddProduct> {
 
   Future<String> _uploadImageToFirebaseStorage(XFile image) async {
     try {
+      List<int> imageBytes = await image.readAsBytes();
+
+      Uint8List unit8Image = Uint8List.fromList(imageBytes);
+      List<int> compressedImage = await FlutterImageCompress.compressWithList(
+        unit8Image,
+        minHeight: 800,
+        minWidth: 800,
+        quality: 60,
+      );
+
       final Reference storageReference = FirebaseStorage.instance
           .ref()
-          .child("images/${loggedUser!.uid} ${DateTime.now()}.jpg");
-      await storageReference.putFile(File(image.path));
+          .child("product_images/${loggedUser!.uid} ${DateTime.now()}.jpg");
+      // await storageReference.putFile(File(image.path));
+      await storageReference.putData(
+        Uint8List.fromList(compressedImage),
+        SettableMetadata(contentType: 'image/jpeg'), // 확장자에 맞게 contentType 설정
+      );
       String imageUrl = await storageReference.getDownloadURL();
 
       return imageUrl;

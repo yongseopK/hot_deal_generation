@@ -98,6 +98,7 @@ class _ProductBoardState extends State<ProductBoard> {
   List<String> productLinks = [];
   List<String> productDeliveryFees = [];
   List<String> productPrices = [];
+  List<String> productImages = [];
 
   Future<void> getDocumentData(String? title) async {
     try {
@@ -107,6 +108,7 @@ class _ProductBoardState extends State<ProductBoard> {
           .orderBy('postNum', descending: true)
           .get();
 
+      productImages.clear();
       productPrices.clear();
       productPlatform.clear();
       productTitles.clear();
@@ -147,6 +149,7 @@ class _ProductBoardState extends State<ProductBoard> {
           String image =
               imageUrls != null && imageUrls.isNotEmpty ? imageUrls[0] : '';
 
+          productImages.add(image);
           productPlatform.add(platform);
           productTitles.add(title);
           productTexts.add(text);
@@ -291,9 +294,7 @@ class _ProductBoardState extends State<ProductBoard> {
                                         contentPadding:
                                             const EdgeInsets.symmetric(
                                                 vertical: 5, horizontal: 15),
-                                        title: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
+                                        title: Stack(
                                           children: [
                                             Column(
                                               crossAxisAlignment:
@@ -318,7 +319,7 @@ class _ProductBoardState extends State<ProductBoard> {
                                                         Text(
                                                           productTitles[index]
                                                                       .length >
-                                                                  20
+                                                                  10
                                                               ? '${productTitles[index].substring(0, 10)}...'
                                                               : productTitles[
                                                                   index],
@@ -329,20 +330,20 @@ class _ProductBoardState extends State<ProductBoard> {
                                                         )
                                                       ],
                                                     ),
-                                                    SizedBox(
-                                                      width: width * 0.03,
-                                                    ),
-                                                    productThumbnails
-                                                                .isNotEmpty &&
-                                                            productThumbnails[
-                                                                    index]
-                                                                .isNotEmpty
-                                                        ? Image.asset(
-                                                            'images/imageicon.png',
-                                                            width: width * 0.04,
-                                                          )
-                                                        : const SizedBox(
-                                                            width: 10),
+                                                    // SizedBox(
+                                                    //   width: width * 0.03,
+                                                    // ),
+                                                    // productThumbnails
+                                                    //             .isNotEmpty &&
+                                                    //         productThumbnails[
+                                                    //                 index]
+                                                    //             .isNotEmpty
+                                                    //     ? Image.asset(
+                                                    //         'images/imageicon.png',
+                                                    //         width: width * 0.04,
+                                                    //       )
+                                                    //     : const SizedBox(
+                                                    //         width: 10),
                                                   ],
                                                 ),
                                                 SizedBox(
@@ -477,6 +478,24 @@ class _ProductBoardState extends State<ProductBoard> {
                                                 ),
                                               ],
                                             ),
+                                            Positioned(
+                                              top: 0,
+                                              right: 0,
+                                              child: productThumbnails[index]
+                                                      .isNotEmpty
+                                                  ? Image.network(
+                                                      productThumbnails[index],
+                                                      fit: BoxFit.fitHeight,
+                                                      width: width * 0.17,
+                                                      height: width * 0.17,
+                                                    )
+                                                  : Container(),
+                                              // child: Container(
+                                              //   color: Colors.black,
+                                              //   width: width * 0.17,
+                                              //   height: width * 0.17,
+                                              // ),
+                                            )
                                           ],
                                         ),
                                       ),
