@@ -617,7 +617,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         if (!recommendInfo.contains(loggedUser?.email)) {
                           currentDocument.update({
                             'recommendInfo':
-                                FieldValue.arrayUnion([loggedUser?.email])
+                                FieldValue.arrayUnion([loggedUser?.email]),
                           });
                           isRecommend = true;
 

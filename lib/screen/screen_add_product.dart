@@ -237,6 +237,7 @@ class _AddProductState extends State<AddProduct> {
               'time': DateFormat('HH:mm').format(dt),
               'viewCount': 0,
               'recommendInfo': [],
+              'recommendCount': 0,
               'commentCount': 0
             })
             .then((value) => print("업로드 성공"))

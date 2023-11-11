@@ -76,6 +76,7 @@ class _ProductDetailState extends State<ProductDetail> {
     super.initState();
     getPostDetails();
     getCurrentUser();
+    getCommentData();
     print(title);
   }
 
@@ -514,9 +515,13 @@ class _ProductDetailState extends State<ProductDetail> {
                         .collection('Product')
                         .doc(widget.documentId);
 
+                    DocumentSnapshot documentSnapshot =
+                        await currentDocument.get();
+
                     try {
                       if (loggedUser != null) {
                         final user = FirebaseAuth.instance.currentUser;
+
                         final userData = await FirebaseFirestore.instance
                             .collection('user')
                             .doc(user!.uid)
@@ -524,9 +529,14 @@ class _ProductDetailState extends State<ProductDetail> {
 
                         if (userData.exists) {
                           if (!recommendInfo.contains(loggedUser?.email)) {
-                            currentDocument.update({
+                            int currentRecommendCount =
+                                documentSnapshot.get('recommendCount') ?? 0;
+                            int newRecommendCount = currentRecommendCount + 1;
+
+                            await currentDocument.update({
                               'recommendInfo':
-                                  FieldValue.arrayUnion([loggedUser?.email])
+                                  FieldValue.arrayUnion([loggedUser?.email]),
+                              'recommendCount': newRecommendCount,
                             });
                             isRecommend = true;
 
