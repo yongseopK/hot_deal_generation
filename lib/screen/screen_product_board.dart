@@ -318,32 +318,21 @@ class _ProductBoardState extends State<ProductBoard> {
                                                         ),
                                                         Text(
                                                           productTitles[index]
-                                                                      .length >
-                                                                  10
-                                                              ? '${productTitles[index].substring(0, 10)}...'
+                                                                          .length +
+                                                                      productPlatform[
+                                                                              index]
+                                                                          .length >
+                                                                  16
+                                                              ? '${productTitles[index].substring(0, 16 - productPlatform[index].length)}...'
                                                               : productTitles[
                                                                   index],
                                                           style:
                                                               const TextStyle(
                                                             fontSize: 18,
                                                           ),
-                                                        )
+                                                        ),
                                                       ],
                                                     ),
-                                                    // SizedBox(
-                                                    //   width: width * 0.03,
-                                                    // ),
-                                                    // productThumbnails
-                                                    //             .isNotEmpty &&
-                                                    //         productThumbnails[
-                                                    //                 index]
-                                                    //             .isNotEmpty
-                                                    //     ? Image.asset(
-                                                    //         'images/imageicon.png',
-                                                    //         width: width * 0.04,
-                                                    //       )
-                                                    //     : const SizedBox(
-                                                    //         width: 10),
                                                   ],
                                                 ),
                                                 SizedBox(
@@ -380,12 +369,16 @@ class _ProductBoardState extends State<ProductBoard> {
                                                       ),
                                                     ),
                                                     Text(
-                                                      '₩${currencyFormat.format(int.parse((productDeliveryFees[index])))}',
+                                                      productDeliveryFees[
+                                                                  index] ==
+                                                              '0'
+                                                          ? "무료"
+                                                          : '₩${currencyFormat.format(int.parse((productDeliveryFees[index])))}',
                                                       style: const TextStyle(
                                                         fontSize: 15,
                                                         color: Colors.black,
                                                       ),
-                                                    )
+                                                    ),
                                                   ],
                                                 ),
                                                 SizedBox(
@@ -483,11 +476,17 @@ class _ProductBoardState extends State<ProductBoard> {
                                               right: 0,
                                               child: productThumbnails[index]
                                                       .isNotEmpty
-                                                  ? Image.network(
-                                                      productThumbnails[index],
-                                                      fit: BoxFit.fitHeight,
-                                                      width: width * 0.17,
-                                                      height: width * 0.17,
+                                                  ? ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10),
+                                                      child: Image.network(
+                                                        productThumbnails[
+                                                            index],
+                                                        fit: BoxFit.fitHeight,
+                                                        width: width * 0.165,
+                                                        height: width * 0.165,
+                                                      ),
                                                     )
                                                   : Container(),
                                               // child: Container(
@@ -495,7 +494,7 @@ class _ProductBoardState extends State<ProductBoard> {
                                               //   width: width * 0.17,
                                               //   height: width * 0.17,
                                               // ),
-                                            )
+                                            ),
                                           ],
                                         ),
                                       ),

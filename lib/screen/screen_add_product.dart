@@ -193,7 +193,6 @@ class _AddProductState extends State<AddProduct> {
         _selectedValue.isNotEmpty &&
         productPrice != 0 &&
         productPrice != null &&
-        productDeliveryFee != 0 &&
         productDeliveryFee != null &&
         productLink.isNotEmpty) {
       setState(() {
@@ -264,7 +263,7 @@ class _AddProductState extends State<AddProduct> {
         showValidateToastMessage("판매처를 선택해주세요.");
       } else if (productPrice == 0 || productPrice == null) {
         showValidateToastMessage("가격을 입력해주세요.");
-      } else if (productDeliveryFee == 0 || productDeliveryFee == null) {
+      } else if (productDeliveryFee == null) {
         showValidateToastMessage("배송비를 입력해주세요.");
       } else if (productLink.isEmpty) {
         showValidateToastMessage("링크를 입력해주세요.");
@@ -281,7 +280,7 @@ class _AddProductState extends State<AddProduct> {
     "쿠팡",
     "11번가",
     "G마켓",
-    "공식브랜드 홈",
+    "공식홈",
     "티몬",
     "위메프",
     "SSG",
@@ -526,7 +525,7 @@ class _AddProductState extends State<AddProduct> {
                         textInputAction: TextInputAction.newline,
                         decoration: const InputDecoration(
                           border: InputBorder.none,
-                          hintText: "링크를 입력해주세요",
+                          hintText: "링크를 입력해주세요(https://www 포함)",
                         ),
                       ),
                     ),
