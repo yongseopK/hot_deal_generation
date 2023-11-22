@@ -13,6 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:hot_deal_generation/screen/screen_add_post.dart';
 import 'package:hot_deal_generation/screen/screen_post_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hot_deal_generation/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -22,6 +24,10 @@ class CommunityScreen extends StatefulWidget {
 }
 
 class _CommunityScreenState extends State<CommunityScreen> {
+  bool isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
 
@@ -91,7 +97,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
           documentViewCount.add(parseViewCount);
           documentRecomendCount.add(recommendCount);
           documentCommentCount.add(parseCommentCount);
-          print(documentCommentCount);
         }
       } else {
         print("컬렉션에 문서가 없음");
@@ -195,213 +200,246 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
     return SafeArea(
       child: Scaffold(
-        body: isLoading
-            ? const Center(
-                child: CircularProgressIndicator(),
-              )
-            : FutureBuilder<int>(
-                future: getDocumentCountInCollection(), // 문서 개수를 가져오는 비동기 함수 호출
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(
+        body: Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            return isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : FutureBuilder<int>(
+                    future:
+                        getDocumentCountInCollection(), // 문서 개수를 가져오는 비동기 함수 호출
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CircularProgressIndicator(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(),
+                              ],
+                            ),
                           ],
-                        ),
-                      ],
-                    ); // 데이터가 로드되기를 기다릴 동안 로딩 표시
-                  } else {
-                    if (snapshot.hasError) {
-                      return Text('에러 발생: ${snapshot.error}');
-                    } else {
-                      return SizedBox(
-                        child: RefreshIndicator(
-                          onRefresh: () async {
-                            QuerySnapshot querySnapshot =
-                                await FirebaseFirestore.instance
-                                    .collection('BulletinBoard')
-                                    .orderBy('postNum', descending: true)
-                                    .get();
-                            print('타일 개수:  ${querySnapshot.docs.length}');
-                            loadDataInBackground();
-                            setState(() {
-                              isLoading = false;
-                            });
-                          },
-                          child: documentTitles.isNotEmpty
-                              ? ListView.builder(
-                                  itemCount: documentTitles.length,
-                                  itemBuilder: (context, index) {
-                                    return GestureDetector(
-                                      onTap: () {
-                                        print('인덱스 : $index');
-                                        if (!isNavigatingToDetail) {
-                                          isNavigatingToDetail = true;
-                                          _navigateToPostDetail(context, index);
+                        ); // 데이터가 로드되기를 기다릴 동안 로딩 표시
+                      } else {
+                        if (snapshot.hasError) {
+                          return Text('에러 발생: ${snapshot.error}');
+                        } else {
+                          return SizedBox(
+                            child: RefreshIndicator(
+                              onRefresh: () async {
+                                QuerySnapshot querySnapshot =
+                                    await FirebaseFirestore.instance
+                                        .collection('BulletinBoard')
+                                        .orderBy('postNum', descending: true)
+                                        .get();
+                                print('타일 개수:  ${querySnapshot.docs.length}');
+                                loadDataInBackground();
+                                setState(() {
+                                  isLoading = false;
+                                });
+                              },
+                              child: documentTitles.isNotEmpty
+                                  ? ListView.builder(
+                                      itemCount: documentTitles.length,
+                                      itemBuilder: (context, index) {
+                                        return GestureDetector(
+                                          onTap: () {
+                                            print('인덱스 : $index');
+                                            if (!isNavigatingToDetail) {
+                                              isNavigatingToDetail = true;
+                                              _navigateToPostDetail(
+                                                  context, index);
 
-                                          Timer(const Duration(seconds: 1), () {
-                                            isNavigatingToDetail = false;
-                                          });
-                                        }
-                                      },
-                                      child: Card(
-                                        margin: const EdgeInsets.all(2.0),
-                                        child: ListTile(
-                                          contentPadding:
-                                              const EdgeInsets.symmetric(
-                                                  vertical: 10, horizontal: 15),
-                                          title: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                              Timer(const Duration(seconds: 1),
+                                                  () {
+                                                isNavigatingToDetail = false;
+                                              });
+                                            }
+                                          },
+                                          child: Card(
+                                            margin: const EdgeInsets.all(2.0),
+                                            child: ListTile(
+                                              contentPadding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 15),
+                                              title: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
                                                 children: [
-                                                  Row(
-                                                    children: [
-                                                      Text(
-                                                        documentTitles[index],
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 18,
-                                                        ),
-                                                      ),
-                                                      SizedBox(
-                                                        width: width * 0.03,
-                                                      ),
-                                                      documentThumbnails
-                                                                  .isNotEmpty &&
-                                                              documentThumbnails[
-                                                                      index]
-                                                                  .isNotEmpty
-                                                          ? Image.asset(
-                                                              'images/imageicon.png',
-                                                              width:
-                                                                  width * 0.04,
-                                                            )
-                                                          : const SizedBox(
-                                                              width: 10),
-                                                    ],
-                                                  ),
-                                                  SizedBox(
-                                                    height: height * 0.007,
-                                                  ),
-                                                  Row(
+                                                  Column(
                                                     crossAxisAlignment:
                                                         CrossAxisAlignment
-                                                            .center,
+                                                            .start,
                                                     children: [
-                                                      Text(
-                                                        documentUserName[index],
-                                                        style: const TextStyle(
-                                                          color: Colors.grey,
-                                                          fontSize: 15,
-                                                        ),
+                                                      Row(
+                                                        children: [
+                                                          Text(
+                                                            documentTitles[
+                                                                index],
+                                                            style:
+                                                                const TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 18,
+                                                            ),
+                                                          ),
+                                                          SizedBox(
+                                                            width: width * 0.03,
+                                                          ),
+                                                          documentThumbnails
+                                                                      .isNotEmpty &&
+                                                                  documentThumbnails[
+                                                                          index]
+                                                                      .isNotEmpty
+                                                              ? Icon(
+                                                                  Icons.photo,
+                                                                  size: width *
+                                                                      0.05,
+                                                                  color: isDarkMode(
+                                                                          context)
+                                                                      ? null
+                                                                      : Colors
+                                                                          .black,
+                                                                )
+                                                              : const SizedBox(
+                                                                  width: 10),
+                                                        ],
                                                       ),
                                                       SizedBox(
-                                                        width: width * 0.02,
+                                                        height: height * 0.007,
                                                       ),
-                                                      Text(
-                                                        '조회 ${documentViewCount[index]}',
-                                                        style: const TextStyle(
-                                                          color: Colors.grey,
-                                                          fontSize: 15,
-                                                        ),
-                                                      ),
-                                                      SizedBox(
-                                                        width: width * 0.02,
-                                                      ),
-                                                      Text(
-                                                        documentDate[index],
-                                                        style: const TextStyle(
-                                                          color: Colors.grey,
-                                                          fontSize: 15,
-                                                        ),
-                                                      ),
-                                                      SizedBox(
-                                                        width: width * 0.01,
-                                                      ),
-                                                      Text(
-                                                        documentTime[index],
-                                                        style: const TextStyle(
-                                                          color: Colors.grey,
-                                                          fontSize: 15,
-                                                        ),
+                                                      Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          Text(
+                                                            documentUserName[
+                                                                index],
+                                                            style: TextStyle(
+                                                              fontSize: 15,
+                                                              color: isDarkMode(
+                                                                      context)
+                                                                  ? null
+                                                                  : Colors.grey,
+                                                            ),
+                                                          ),
+                                                          SizedBox(
+                                                            width: width * 0.02,
+                                                          ),
+                                                          Text(
+                                                            '조회 ${documentViewCount[index]}',
+                                                            style: TextStyle(
+                                                              fontSize: 15,
+                                                              color: isDarkMode(
+                                                                      context)
+                                                                  ? null
+                                                                  : Colors.grey,
+                                                            ),
+                                                          ),
+                                                          SizedBox(
+                                                            width: width * 0.02,
+                                                          ),
+                                                          Text(
+                                                            documentDate[index],
+                                                            style: TextStyle(
+                                                              fontSize: 15,
+                                                              color: isDarkMode(
+                                                                      context)
+                                                                  ? null
+                                                                  : Colors.grey,
+                                                            ),
+                                                          ),
+                                                          SizedBox(
+                                                            width: width * 0.01,
+                                                          ),
+                                                          Text(
+                                                            documentTime[index],
+                                                            style: TextStyle(
+                                                              fontSize: 15,
+                                                              color: isDarkMode(
+                                                                      context)
+                                                                  ? null
+                                                                  : Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ),
                                                     ],
+                                                  ),
+                                                  Container(
+                                                    width: width * 0.18,
+                                                    padding: EdgeInsets.all(
+                                                      width * 0.015,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                      border: Border.all(
+                                                        color: Colors
+                                                            .grey.shade600,
+                                                      ),
+                                                    ),
+                                                    child: Column(
+                                                      children: [
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceAround,
+                                                          children: [
+                                                            const Icon(
+                                                              CupertinoIcons
+                                                                  .chat_bubble_2,
+                                                            ),
+                                                            Text(
+                                                                documentCommentCount[
+                                                                    index]),
+                                                          ],
+                                                        ),
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceAround,
+                                                          children: [
+                                                            const Icon(Icons
+                                                                .thumb_up_alt_outlined),
+                                                            Text(
+                                                                documentRecomendCount[
+                                                                    index]),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ],
                                               ),
-                                              Container(
-                                                width: width * 0.18,
-                                                padding: EdgeInsets.all(
-                                                    width * 0.015),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.grey[200],
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  border: Border.all(
-                                                    color: Colors.grey.shade400,
-                                                  ),
-                                                ),
-                                                child: Column(
-                                                  children: [
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceAround,
-                                                      children: [
-                                                        const Icon(
-                                                          CupertinoIcons
-                                                              .chat_bubble_2,
-                                                        ),
-                                                        Text(
-                                                            documentCommentCount[
-                                                                index]),
-                                                      ],
-                                                    ),
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceAround,
-                                                      children: [
-                                                        const Icon(Icons
-                                                            .thumb_up_alt_outlined),
-                                                        Text(
-                                                            documentRecomendCount[
-                                                                index]),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
+                                            ),
                                           ),
-                                        ),
+                                        );
+                                      },
+                                    )
+                                  : const Center(
+                                      child: Text(
+                                        '게시물이 없습니다.',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
                                       ),
-                                    );
-                                  },
-                                )
-                              : const Center(
-                                  child: Text(
-                                    '게시물이 없습니다.',
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                        ),
-                      );
-                    }
-                  }
-                },
-              ),
+                                    ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  );
+          },
+        ),
         floatingActionButton: loggedUser != null
             ? FloatingActionButton(
                 onPressed: () {
@@ -419,7 +457,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                   });
                 },
                 backgroundColor: Colors.black,
-                child: const Icon(Icons.add),
+                elevation: 0.0,
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                ),
               )
             : null,
       ),

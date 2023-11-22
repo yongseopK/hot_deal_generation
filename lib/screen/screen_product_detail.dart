@@ -1,4 +1,4 @@
-// ignore_for_file: no_logic_in_create_state
+// ignore_for_file: no_logic_in_create_state, avoid_print
 
 import 'dart:async';
 
@@ -7,10 +7,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:get/get_utils/get_utils.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hot_deal_generation/functions/image_save.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'dart:io' show File, Platform;
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 class ProductDetail extends StatefulWidget {
   const ProductDetail({Key? key, required this.documentId}) : super(key: key);
@@ -38,6 +43,10 @@ class _ProductDetailState extends State<ProductDetail> {
   TextEditingController commentTextController = TextEditingController();
   void enableButton() {
     isButtonDisabled = false;
+  }
+
+  bool isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
   }
 
   String title = '';
@@ -223,6 +232,57 @@ class _ProductDetailState extends State<ProductDetail> {
     }
   }
 
+  void removePost() async {
+    // 현재 사용자 정보 불러오기
+    final user = FirebaseAuth.instance.currentUser;
+    final userData = await FirebaseFirestore.instance
+        .collection('user')
+        .doc(user!.uid)
+        .get();
+
+    Map<String, dynamic> userDataMap = userData.data() as Map<String, dynamic>;
+    String currentUserName = userDataMap['userName'];
+
+    try {
+      if (currentUserName == userName) {
+        CollectionReference subCollectionRef = FirebaseFirestore.instance
+            .collection('Product')
+            .doc(documentId)
+            .collection('comments');
+
+        QuerySnapshot subCollectionSnapshot = await subCollectionRef.get();
+
+        for (QueryDocumentSnapshot doc in subCollectionSnapshot.docs) {
+          await subCollectionRef.doc(doc.id).delete();
+        }
+
+        await FirebaseFirestore.instance
+            .collection('Product')
+            .doc(documentId)
+            .delete()
+            .then((value) {
+          Fluttertoast.showToast(
+            msg: '삭제가 완료됐습니다.',
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+          );
+          Navigator.pop(context, result);
+        }).catchError((error) {
+          print(error);
+        });
+      } else {
+        Fluttertoast.showToast(
+          msg: "본인의 게시물만 삭제할 수 있습니다.",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.red,
+        );
+      }
+    } on FirebaseException catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -243,63 +303,100 @@ class _ProductDetailState extends State<ProductDetail> {
                     style: GoogleFonts.nanumGothic(fontSize: 15),
                   ),
                   onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return Dialog(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                const Text(
-                                  '안내',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 19,
+                    Platform.isAndroid
+                        ? showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Dialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: <Widget>[
+                                      const Column(
+                                        children: [
+                                          Text(
+                                            '안내',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 19,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: height * 0.03,
+                                      ),
+                                      const Text(
+                                        '게시물을 삭제하시겠습니까?',
+                                        style: TextStyle(fontSize: 17),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          TextButton(
+                                            onPressed: () {
+                                              removePost();
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text(
+                                              '삭제',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text('닫기'),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                SizedBox(
-                                  height: height * 0.03,
-                                ),
-                                const Text(
-                                  '게시물을 삭제하시겠습니까?',
-                                  style: TextStyle(fontSize: 17),
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    TextButton(
-                                      onPressed: () {
-                                        // removePost();
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text(
-                                        '삭제',
-                                        style: TextStyle(
-                                          color: Colors.red,
-                                        ),
+                              );
+                            },
+                          )
+                        : showCupertinoDialog(
+                            context: context,
+                            builder: (context) {
+                              return CupertinoAlertDialog(
+                                title: const Text("안내"),
+                                content: const Text("게시물을 삭제하시겠습니까?"),
+                                actions: [
+                                  CupertinoDialogAction(
+                                    onPressed: () {
+                                      removePost();
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text(
+                                      "삭제",
+                                      style: TextStyle(
+                                        color: Colors.red,
                                       ),
                                     ),
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text('닫기'),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
+                                  ),
+                                  CupertinoDialogAction(
+                                    isDefaultAction: true,
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text("닫기"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
                   },
                 ),
                 PopupMenuItem(
@@ -337,33 +434,66 @@ class _ProductDetailState extends State<ProductDetail> {
                     Text(
                       '[$platform] $title',
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 3),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('작성자 : $userName'),
+                    Text(
+                      '작성자 : $userName',
+                      style: TextStyle(
+                        color: isDarkMode(context) ? null : Colors.grey[600],
+                      ),
+                    ),
                     Row(
                       children: [
-                        Text(date),
+                        Text(
+                          date,
+                          style: TextStyle(
+                            color:
+                                isDarkMode(context) ? null : Colors.grey[600],
+                          ),
+                        ),
                         const SizedBox(width: 5),
-                        Text(time),
+                        Text(
+                          time,
+                          style: TextStyle(
+                            color:
+                                isDarkMode(context) ? null : Colors.grey[600],
+                          ),
+                        ),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 3),
                 Row(
                   children: [
-                    Text('조회 $viewCount'),
+                    Text(
+                      '조회 $viewCount',
+                      style: TextStyle(
+                        color: isDarkMode(context) ? null : Colors.grey[600],
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    Text('댓글 $numberOfDocument'),
+                    Text(
+                      '댓글 $numberOfDocument',
+                      style: TextStyle(
+                        color: isDarkMode(context) ? null : Colors.grey[600],
+                      ),
+                    ),
                     const SizedBox(width: 10),
-                    Text('추천 ${recommendInfo.length}'),
+                    Text(
+                      '추천 ${recommendInfo.length}',
+                      style: TextStyle(
+                        color: isDarkMode(context) ? null : Colors.grey[600],
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -377,109 +507,79 @@ class _ProductDetailState extends State<ProductDetail> {
                 //   color: Colors.black,
                 // ),
                 buildInfoRow('판매처', platform == "공식홈" ? "공식브랜드 홈" : platform),
-                const Divider(
-                  color: Colors.black,
+                Divider(
+                  color: isDarkMode(context) ? Colors.white : Colors.black,
                 ),
                 buildInfoRow('가격', '${currencyFormat.format(price)}원'),
-                const Divider(
-                  color: Colors.black,
+                Divider(
+                  color: isDarkMode(context) ? Colors.white : Colors.black,
                 ),
                 buildInfoRow('배송비', '${currencyFormat.format(deleveryFee)}원'),
-                const Divider(
-                  color: Colors.black,
+                Divider(
+                  color: isDarkMode(context) ? Colors.white : Colors.black,
                 ),
                 buildLinkRow('링크', productLink),
-                const Divider(
-                  color: Colors.black,
+                Divider(
+                  color: isDarkMode(context) ? Colors.white : Colors.black,
                 ),
                 if (imageUrls.length == 1)
                   Column(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(imageUrls[0]),
-                      ),
+                      SaveImageDialog(context, imageUrls, 0),
                     ],
                   )
                 else if (imageUrls.length == 2)
                   Column(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(imageUrls[0]),
-                      ),
+                      SaveImageDialog(context, imageUrls, 0),
                       Padding(
                         padding: EdgeInsets.symmetric(
                           vertical: height * 0.005,
                         ),
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(imageUrls[1]),
-                      ),
+                      SaveImageDialog(context, imageUrls, 1),
                     ],
                   )
                 else if (imageUrls.length == 3)
                   Column(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(imageUrls[0]),
-                      ),
+                      SaveImageDialog(context, imageUrls, 0),
                       Padding(
                         padding: EdgeInsets.symmetric(
                           vertical: height * 0.005,
                         ),
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(imageUrls[1]),
-                      ),
+                      SaveImageDialog(context, imageUrls, 1),
                       Padding(
                         padding: EdgeInsets.symmetric(
                           vertical: height * 0.005,
                         ),
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(imageUrls[2]),
-                      ),
+                      SaveImageDialog(context, imageUrls, 2),
                     ],
                   )
                 else if (imageUrls.length == 4)
                   Column(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(imageUrls[0]),
-                      ),
+                      SaveImageDialog(context, imageUrls, 0),
                       Padding(
                         padding: EdgeInsets.symmetric(
                           vertical: height * 0.005,
                         ),
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(imageUrls[1]),
-                      ),
+                      SaveImageDialog(context, imageUrls, 1),
                       Padding(
                         padding: EdgeInsets.symmetric(
                           vertical: height * 0.005,
                         ),
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(imageUrls[2]),
-                      ),
+                      SaveImageDialog(context, imageUrls, 2),
                       Padding(
                         padding: EdgeInsets.symmetric(
                           vertical: height * 0.005,
                         ),
                       ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(imageUrls[3]),
-                      ),
+                      SaveImageDialog(context, imageUrls, 3),
                     ],
                   ),
                 Padding(
@@ -547,46 +647,62 @@ class _ProductDetailState extends State<ProductDetail> {
                             );
                             getPostDetails();
                           } else {
-                            // ignore: use_build_context_synchronously
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return Dialog(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16.0),
-                                  ),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: <Widget>[
-                                        const Text(
-                                          '안내',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 19,
-                                          ),
+                            Platform.isAndroid
+                                ?
+                                //ignore: use_build_context_synchronously
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10.0),
                                         ),
-                                        SizedBox(
-                                          height: height * 0.03,
+                                        title: const Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            Text("안내"),
+                                          ],
                                         ),
-                                        const Text(
-                                          '이미 굿딜한 글입니다.',
-                                          style: TextStyle(fontSize: 17),
+                                        content: const Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text("이미 굿딜한 게시물입니다."),
+                                          ],
                                         ),
-                                        const SizedBox(height: 16),
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                          child: const Text('닫기'),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text("확인"),
+                                          )
+                                        ],
+                                      );
+                                    },
+                                  )
+                                // ignore: use_build_context_synchronously
+                                : showCupertinoDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return CupertinoAlertDialog(
+                                        title: const Text("안내"),
+                                        content: const Text("이미 굿딜한 게시물입니다."),
+                                        actions: [
+                                          CupertinoDialogAction(
+                                            isDefaultAction: true,
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text("닫기"),
+                                          )
+                                        ],
+                                      );
+                                    });
                           }
                         } else {
                           print('사용자 데이터를 찾을 수 없음');
@@ -618,13 +734,21 @@ class _ProductDetailState extends State<ProductDetail> {
                       SizedBox(
                         width: width * 0.02,
                       ),
-                      const Text(
-                        '굿 딜!',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      recommendInfo.contains(loggedUser?.email)
+                          ? const Text(
+                              '굿딜완료!',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : const Text(
+                              '굿 딜',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ],
                   ),
                 ),
@@ -658,7 +782,7 @@ class _ProductDetailState extends State<ProductDetail> {
                   ),
                   child: Container(
                     height: 0.3,
-                    color: Colors.black,
+                    color: isDarkMode(context) ? Colors.white : Colors.black,
                   ),
                 ),
                 Padding(
@@ -673,8 +797,10 @@ class _ProductDetailState extends State<ProductDetail> {
                           child: Container(
                             height: height * 0.1,
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              border: Border.all(color: Colors.white),
+                              color: isDarkMode(context)
+                                  ? Colors.black
+                                  : Colors.white,
+                              border: Border.all(color: Colors.grey),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Padding(
@@ -693,11 +819,21 @@ class _ProductDetailState extends State<ProductDetail> {
                                 },
                                 maxLines: null,
                                 textInputAction: TextInputAction.newline,
+                                // style: TextStyle(
+                                //   color: isDarkMode(context)
+                                //       ? Colors.black
+                                //       : Colors.grey,
+                                // ),
                                 decoration: InputDecoration(
                                   border: InputBorder.none,
                                   hintText: loggedUser != null
                                       ? "내용을 입력해주세요"
                                       : "로그인 후 댓글 이용이 가능합니다.",
+                                  // hintStyle: TextStyle(
+                                  //   color: isDarkMode(context)
+                                  //       ? Colors.black
+                                  //       : Colors.black,
+                                  // ),
                                 ),
                               ),
                             ),
@@ -725,6 +861,8 @@ class _ProductDetailState extends State<ProductDetail> {
                                 addComment();
 
                                 Timer(const Duration(seconds: 1), enableButton);
+                                FocusScope.of(context)
+                                    .requestFocus(FocusNode());
                               } else {
                                 Fluttertoast.showToast(
                                   msg: "3글자 이상 입력해주세요",
@@ -767,6 +905,11 @@ class _ProductDetailState extends State<ProductDetail> {
                                 Border? itemBorder = index.isOdd
                                     ? Border.all(color: Colors.grey.shade200)
                                     : null;
+                                Color textColor =
+                                    index.isOdd && isDarkMode(context)
+                                        ? Colors.white
+                                        : Colors.black;
+
                                 return Container(
                                   decoration: BoxDecoration(
                                       color: itemColor,
@@ -784,6 +927,8 @@ class _ProductDetailState extends State<ProductDetail> {
                                           children: [
                                             Text(
                                               userNameArr[index],
+                                              style:
+                                                  TextStyle(color: textColor),
                                             ),
                                             GestureDetector(
                                               onTap: () async {
@@ -977,7 +1122,10 @@ class _ProductDetailState extends State<ProductDetail> {
                                         SizedBox(
                                           height: height * 0.01,
                                         ),
-                                        Text(commentArr[index]),
+                                        Text(
+                                          commentArr[index],
+                                          style: TextStyle(color: textColor),
+                                        ),
                                         SizedBox(
                                           height: height * 0.01,
                                         ),

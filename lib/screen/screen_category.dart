@@ -20,7 +20,6 @@ class CategoryScreen extends StatelessWidget {
       onWillPop: () async => false,
       child: SafeArea(
         child: Scaffold(
-          backgroundColor: Colors.grey[200],
           body: SingleChildScrollView(
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),

@@ -30,6 +30,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
     isButtonDisabled = false;
   }
 
+  bool isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
   final String documentId;
   static String result = "1";
   double fontSize = 15.0;
@@ -699,9 +703,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     SizedBox(
                       width: width * 0.01,
                     ),
-                    const Text(
-                      '추천',
-                    ),
+                    !recommendInfo.contains(loggedUser?.email)
+                        ? const Text(
+                            '추천',
+                            style: TextStyle(fontSize: 15),
+                          )
+                        : const Text(
+                            "추천완료!",
+                            style: TextStyle(fontSize: 15),
+                          ),
                   ],
                 ),
               ),
@@ -735,7 +745,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 ),
                 child: Container(
                   height: 0.3,
-                  color: Colors.black,
+                  color: isDarkMode(context) ? Colors.white : Colors.black,
                 ),
               ),
               Padding(
@@ -750,7 +760,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         child: Container(
                           height: height * 0.1,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: isDarkMode(context)
+                                ? Colors.black
+                                : Colors.white,
                             border: Border.all(color: Colors.white),
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -843,6 +855,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         Border? itemBorder = index.isOdd
                             ? Border.all(color: Colors.grey.shade200)
                             : null;
+                        Color textColor = index.isOdd && isDarkMode(context)
+                            ? Colors.white
+                            : Colors.black;
                         return Container(
                           decoration: BoxDecoration(
                               color: itemColor,
@@ -859,6 +874,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                   children: [
                                     Text(
                                       userNameArr[index],
+                                      style: TextStyle(color: textColor),
                                     ),
                                     GestureDetector(
                                       onTap: () async {
@@ -1067,7 +1083,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                 SizedBox(
                                   height: height * 0.01,
                                 ),
-                                Text(commentArr[index]),
+                                Text(
+                                  commentArr[index],
+                                  style: TextStyle(
+                                    color: textColor,
+                                  ),
+                                ),
                                 SizedBox(
                                   height: height * 0.01,
                                 ),

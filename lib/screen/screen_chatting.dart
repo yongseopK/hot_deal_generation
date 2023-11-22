@@ -43,6 +43,17 @@ class _ChatScreenState extends State<ChatScreen> {
       onWillPop: () async => false,
       child: SafeArea(
         child: Scaffold(
+          appBar: AppBar(
+            title: const Text("1:1 문의"),
+            backgroundColor: Colors.black,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            elevation: 0.0,
+          ),
           backgroundColor: Colors.grey[200],
           body: loggedUser != null
               ? Container(

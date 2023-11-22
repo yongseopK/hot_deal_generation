@@ -46,6 +46,10 @@ class _ProductBoardState extends State<ProductBoard> {
 
   final NumberFormat currencyFormat = NumberFormat("#,##0", "en_US");
 
+  bool isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
   void getCurrentUser() {
     try {
       final user = _authentication.currentUser;
@@ -342,11 +346,15 @@ class _ProductBoardState extends State<ProductBoard> {
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.center,
                                                   children: [
-                                                    const Text(
+                                                    Text(
                                                       '가격 ',
                                                       style: TextStyle(
-                                                        color: Colors.grey,
                                                         fontSize: 15,
+                                                        color:
+                                                            isDarkMode(context)
+                                                                ? null
+                                                                : Colors
+                                                                    .grey[500],
                                                       ),
                                                     ),
                                                     Text(
@@ -361,11 +369,15 @@ class _ProductBoardState extends State<ProductBoard> {
                                                     SizedBox(
                                                       width: width * 0.01,
                                                     ),
-                                                    const Text(
+                                                    Text(
                                                       '배송비 ',
                                                       style: TextStyle(
-                                                        color: Colors.grey,
                                                         fontSize: 15,
+                                                        color:
+                                                            isDarkMode(context)
+                                                                ? null
+                                                                : Colors
+                                                                    .grey[500],
                                                       ),
                                                     ),
                                                     Text(
@@ -376,7 +388,6 @@ class _ProductBoardState extends State<ProductBoard> {
                                                           : '₩${currencyFormat.format(int.parse((productDeliveryFees[index])))}',
                                                       style: const TextStyle(
                                                         fontSize: 15,
-                                                        color: Colors.black,
                                                       ),
                                                     ),
                                                   ],
@@ -390,29 +401,27 @@ class _ProductBoardState extends State<ProductBoard> {
                                                   children: [
                                                     Text(
                                                       productUserName[index],
-                                                      style: const TextStyle(
-                                                        color: Colors.grey,
+                                                      style: TextStyle(
                                                         fontSize: 15,
+                                                        color:
+                                                            isDarkMode(context)
+                                                                ? null
+                                                                : Colors
+                                                                    .grey[500],
                                                       ),
                                                     ),
                                                     SizedBox(
-                                                      width: width * 0.02,
-                                                    ),
-                                                    Text(
-                                                      '조회 ${productViewCount[index]}',
-                                                      style: const TextStyle(
-                                                        color: Colors.grey,
-                                                        fontSize: 15,
-                                                      ),
-                                                    ),
-                                                    SizedBox(
-                                                      width: width * 0.02,
+                                                      width: width * 0.01,
                                                     ),
                                                     Text(
                                                       productDate[index],
-                                                      style: const TextStyle(
-                                                        color: Colors.grey,
+                                                      style: TextStyle(
                                                         fontSize: 15,
+                                                        color:
+                                                            isDarkMode(context)
+                                                                ? null
+                                                                : Colors
+                                                                    .grey[500],
                                                       ),
                                                     ),
                                                     SizedBox(
@@ -420,13 +429,41 @@ class _ProductBoardState extends State<ProductBoard> {
                                                     ),
                                                     Text(
                                                       productTime[index],
-                                                      style: const TextStyle(
-                                                        color: Colors.grey,
+                                                      style: TextStyle(
                                                         fontSize: 15,
+                                                        color:
+                                                            isDarkMode(context)
+                                                                ? null
+                                                                : Colors
+                                                                    .grey[500],
                                                       ),
                                                     ),
                                                     SizedBox(
                                                       width: width * 0.03,
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons
+                                                              .remove_red_eye_outlined,
+                                                          size: height * 0.02,
+                                                        ),
+                                                        Text(
+                                                          productViewCount[
+                                                              index],
+                                                          style: TextStyle(
+                                                            fontSize: 15,
+                                                            color: isDarkMode(
+                                                                    context)
+                                                                ? null
+                                                                : Colors
+                                                                    .grey[500],
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    SizedBox(
+                                                      width: width * 0.02,
                                                     ),
                                                     Row(
                                                       children: [
@@ -438,10 +475,13 @@ class _ProductBoardState extends State<ProductBoard> {
                                                         Text(
                                                           productCommentCount[
                                                               index],
-                                                          style:
-                                                              const TextStyle(
-                                                            color: Colors.grey,
+                                                          style: TextStyle(
                                                             fontSize: 15,
+                                                            color: isDarkMode(
+                                                                    context)
+                                                                ? null
+                                                                : Colors
+                                                                    .grey[500],
                                                           ),
                                                         ),
                                                       ],
@@ -459,10 +499,13 @@ class _ProductBoardState extends State<ProductBoard> {
                                                         Text(
                                                           productRecomendCount[
                                                               index],
-                                                          style:
-                                                              const TextStyle(
-                                                            color: Colors.grey,
+                                                          style: TextStyle(
                                                             fontSize: 15,
+                                                            color: isDarkMode(
+                                                                    context)
+                                                                ? null
+                                                                : Colors
+                                                                    .grey[500],
                                                           ),
                                                         ),
                                                       ],
@@ -532,13 +575,17 @@ class _ProductBoardState extends State<ProductBoard> {
     if (data != null) {
       final title = ProductBoard.dataToTitle[data];
       return FloatingActionButton(
+        elevation: 0.0,
         onPressed: () {
           if (title != null) {
             navigateToAddProduct(data);
           }
         },
         backgroundColor: Colors.black,
-        child: const Icon(Icons.add),
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
       );
     }
     return const FloatingActionButton(onPressed: null);

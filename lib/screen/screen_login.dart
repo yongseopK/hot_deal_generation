@@ -19,6 +19,8 @@ class Authentication extends StatefulWidget {
 class _AuthenticationState extends State<Authentication> {
   var formKey = GlobalKey<FormState>();
 
+  static String result = "1";
+
   bool showSpinner = false;
 
   String userEmail = '';
@@ -155,7 +157,7 @@ class _AuthenticationState extends State<Authentication> {
                                     email: userEmail, password: userPassword);
                             if (newUser.user != null) {
                               // ignore: use_build_context_synchronously
-                              Navigator.pop(context);
+                              Navigator.pop(context, result);
                             }
                             setState(() {
                               showSpinner = false;
@@ -198,9 +200,10 @@ class _AuthenticationState extends State<Authentication> {
                             child: Text(
                               '로그인',
                               style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold),
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),

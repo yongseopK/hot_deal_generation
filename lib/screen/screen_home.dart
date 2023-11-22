@@ -1,30 +1,82 @@
 // import 'package:flutter/foundation.dart';
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, use_build_context_synchronously, prefer_final_fields
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hot_deal_generation/main.dart';
 import 'package:hot_deal_generation/screen/screen_board.dart';
 import 'package:hot_deal_generation/screen/screen_category.dart';
 import 'package:hot_deal_generation/screen/screen_chatting.dart';
 import 'package:hot_deal_generation/screen/screen_community.dart';
-import 'package:hot_deal_generation/screen/screen_profile.dart';
+import 'package:hot_deal_generation/screen/screen_login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hot_deal_generation/screen/screen_qna.dart';
+import 'package:hot_deal_generation/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback onThemeChanged; // Callback function
+  const HomeScreen({Key? key, required this.onThemeChanged}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final user = FirebaseAuth.instance.currentUser;
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
+
+  late Stream<User?> authStateChanges;
+  bool isDisposed = false;
+
+  late Future<void> userInfoFuture;
 
   @override
   void initState() {
     super.initState();
-    getCurrentUser();
+
+    authStateChanges = _authentication.authStateChanges();
+
+    authStateChanges.listen((User? user) {
+      if (!isDisposed) {
+        setState(() {
+          loggedUser = user;
+        });
+      }
+    });
+
+    userInfoFuture = getCurrentUserInfo();
+  }
+
+  String currentUserName = '';
+  String currentEmail = '';
+  String currentUserImage = '';
+
+  Future<void> getCurrentUserInfo() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user != null) {
+        final userData = await FirebaseFirestore.instance
+            .collection('user')
+            .doc(user.uid)
+            .get();
+        if (userData.exists) {
+          currentUserName = userData.data()!['userName'];
+          currentEmail = userData.data()!['email'];
+          currentUserImage = userData.data()!['picked_image'];
+        } else {
+          print("뭔가 에러가 있는듯?");
+        }
+      } else {
+        print("뭔가 또 문제가있음");
+      }
+    } on FirebaseException catch (e) {
+      print(e);
+    }
+    setState(() {});
   }
 
   void getCurrentUser() {
@@ -32,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       if (user != null) {
         loggedUser = user;
-        print(loggedUser!.email);
       }
     } catch (e) {
       print(e);
@@ -42,13 +93,20 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   @override
+  void dispose() {
+    // 자원 정리 또는 상태 변경 등을 수행
+    super.dispose(); // 반드시 호출해야 합니다.
+    isDisposed = true;
+  }
+
+  @override
   Widget build(BuildContext context) {
     // 사용자의 화면 크기에 따른 높이 너비 설정
     Size screenSize = MediaQuery.of(context).size;
     double width = screenSize.width;
     // ignore: unused_local_variable
     double height = screenSize.height;
-
+    // 테마에 종속된 위젯 부분을 Consumer로 래핑
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
@@ -75,13 +133,152 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+        endDrawer: Drawer(
+          child: FutureBuilder(
+            future: userInfoFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                return Consumer<ThemeProvider>(
+                  builder: (context, themeProvider, child) {
+                    // 여기서 ThemeProvider에 액세스
+                    return ListView(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        UserAccountsDrawerHeader(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[700],
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(20.0),
+                              bottomRight: Radius.circular(20.0),
+                            ),
+                          ),
+                          accountName: currentUserName != ''
+                              ? Text(currentUserName)
+                              : const Text(
+                                  "로그인을 해주세요",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                  ),
+                                ),
+                          accountEmail:
+                              currentEmail != '' ? Text(currentEmail) : null,
+                          currentAccountPicture: currentUserImage != ''
+                              ? CircleAvatar(
+                                  backgroundImage:
+                                      NetworkImage(currentUserImage),
+                                )
+                              : null,
+                        ),
+                        currentEmail != ''
+                            ? ListTile(
+                                leading: const Icon(
+                                  Icons.thumb_up_alt_rounded,
+                                  color: Colors.grey,
+                                ),
+                                title: const Text("Good-Deal List"),
+                                onTap: () {
+                                  print("찜목록임");
+                                },
+                              )
+                            : Container(),
+                        SwitchListTile(
+                          title: const Text("Dark Mode"),
+                          secondary:
+                              const Icon(Icons.dark_mode, color: Colors.grey),
+                          value: themeProvider.currentTheme == ThemeMode.dark,
+                          onChanged: (val) {
+                            themeProvider.toggleTheme();
+                            widget.onThemeChanged();
+
+                            setState(() {
+                              MyApp.themeNotifier.value =
+                                  val ? ThemeMode.dark : ThemeMode.light;
+                            });
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(
+                            Icons.question_answer,
+                            color: Colors.grey,
+                          ),
+                          title: const Text("Q&A"),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      const QnaScreen()),
+                            );
+                          },
+                        ),
+                        loggedUser != null
+                            ? ListTile(
+                                leading: const Icon(
+                                  Icons.person,
+                                  color: Colors.grey,
+                                ),
+                                title: const Text("Inquiry"),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (BuildContext context) =>
+                                          const ChatScreen(),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Container(),
+                        loggedUser != null
+                            ? ListTile(
+                                leading: const Icon(
+                                  Icons.logout,
+                                  color: Colors.grey,
+                                ),
+                                title: const Text("Logout"),
+                                onTap: () async {
+                                  await FirebaseAuth.instance.signOut();
+                                  Navigator.of(context).pop();
+                                },
+                              )
+                            : ListTile(
+                                leading: const Icon(
+                                  Icons.login,
+                                  color: Colors.grey,
+                                ),
+                                title: const Text("Login"),
+                                onTap: () async {
+                                  await FirebaseAuth.instance.signOut();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (BuildContext context) =>
+                                            const Authentication()),
+                                  ).then((result) async {
+                                    if (result == "1") {
+                                      await getCurrentUserInfo();
+                                      setState(() {});
+                                    }
+                                  });
+                                },
+                              ),
+                      ],
+                    );
+                  },
+                );
+              } else {
+                return const CircularProgressIndicator();
+              }
+            },
+          ),
+        ),
         body: _getPage(_selectedIndex),
         bottomNavigationBar: Container(
           decoration: const BoxDecoration(
             color: Colors.black,
           ),
           child: BottomNavigationBar(
-            type: BottomNavigationBarType.fixed, // Add this line
+            type: BottomNavigationBarType.fixed,
             currentIndex: _selectedIndex,
             backgroundColor: Colors.transparent,
             fixedColor: Colors.white,
@@ -96,20 +293,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 label: '홈',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.local_post_office),
-                label: '채팅',
-              ),
-              BottomNavigationBarItem(
                 icon: Icon(Icons.category_rounded),
                 label: '카테고리',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.post_add),
                 label: '커뮤니티',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.account_circle),
-                label: '내정보',
               ),
             ],
           ),
@@ -130,12 +319,10 @@ Widget _getPage(int index) {
     case 0:
       return const BoardScreen();
     case 1:
-      return const ChatScreen();
-    case 2:
       return const CategoryScreen();
-    case 3:
+    case 2:
       return const CommunityScreen();
     default:
-      return const ProfileScreen();
+      return const BoardScreen();
   }
 }
