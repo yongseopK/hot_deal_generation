@@ -19,6 +19,10 @@ class Authentication extends StatefulWidget {
 class _AuthenticationState extends State<Authentication> {
   var formKey = GlobalKey<FormState>();
 
+  bool isDarkMode(BuildContext context1) {
+    return Theme.of(context1).brightness == Brightness.dark;
+  }
+
   static String result = "1";
 
   bool showSpinner = false;
@@ -41,7 +45,8 @@ class _AuthenticationState extends State<Authentication> {
           ),
           backgroundColor: Colors.black,
         ),
-        backgroundColor: Colors.grey[300],
+        backgroundColor:
+            isDarkMode(context) ? Colors.grey[800] : Colors.grey[300],
         body: ModalProgressHUD(
           inAsyncCall: showSpinner,
           child: SafeArea(
@@ -83,7 +88,9 @@ class _AuthenticationState extends State<Authentication> {
                                 const EdgeInsets.symmetric(horizontal: 25.0),
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.grey[200],
+                                color: isDarkMode(context)
+                                    ? Colors.grey[900]
+                                    : Colors.grey[200],
                                 border: Border.all(color: Colors.white),
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -115,7 +122,9 @@ class _AuthenticationState extends State<Authentication> {
                                 const EdgeInsets.symmetric(horizontal: 25.0),
                             child: Container(
                               decoration: BoxDecoration(
-                                  color: Colors.grey[200],
+                                  color: isDarkMode(context)
+                                      ? Colors.grey[900]
+                                      : Colors.grey[200],
                                   border: Border.all(color: Colors.white),
                                   borderRadius: BorderRadius.circular(12)),
                               child: Padding(
@@ -194,7 +203,9 @@ class _AuthenticationState extends State<Authentication> {
                         child: Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                              color: Colors.red,
+                              color: isDarkMode(context)
+                                  ? Colors.red[900]
+                                  : Colors.red,
                               borderRadius: BorderRadius.circular(12)),
                           child: const Center(
                             child: Text(

@@ -57,6 +57,9 @@ dependencies:
   flutter_image_compress:
   url_launcher:
   path_provider: 
+  flutter_email_sender:
+  device_info:
+  open_mail_app:
 
 dev_dependencies:
   flutter_test:

@@ -121,6 +121,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
   }
 
+  bool isDarkMode(BuildContext context1) {
+    return Theme.of(context1).brightness == Brightness.dark;
+  }
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -140,7 +144,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           backgroundColor: Colors.black,
           elevation: 0.0,
         ),
-        backgroundColor: Colors.grey[300],
+        backgroundColor:
+            isDarkMode(context) ? Colors.grey[800] : Colors.grey[300],
         body: ModalProgressHUD(
           inAsyncCall: showSpinner,
           child: SafeArea(
@@ -150,7 +155,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                        color: Colors.grey,
+                        color: isDarkMode(context)
+                            ? Colors.grey[600]
+                            : Colors.grey[200],
                         border: Border.all(color: Colors.black, width: 3),
                         borderRadius:
                             const BorderRadius.all(Radius.circular(100))),
@@ -195,7 +202,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 25.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
+                              color: isDarkMode(context)
+                                  ? Colors.grey[900]
+                                  : Colors.grey[200],
                               border: Border.all(color: Colors.white),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -225,7 +234,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 25.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
+                              color: isDarkMode(context)
+                                  ? Colors.grey[900]
+                                  : Colors.grey[200],
                               border: Border.all(color: Colors.white),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -256,7 +267,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 25.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
+                              color: isDarkMode(context)
+                                  ? Colors.grey[900]
+                                  : Colors.grey[200],
                               border: Border.all(color: Colors.white),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -287,7 +300,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 25.0),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey[200],
+                              color: isDarkMode(context)
+                                  ? Colors.grey[900]
+                                  : Colors.grey[200],
                               border: Border.all(color: Colors.white),
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -373,6 +388,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 'userName': userName,
                                 'email': userEmail,
                                 'picked_image': url,
+                                'goodDealList': [],
                               });
                               if (newUser.user != null) {
                                 // ignore: use_build_context_synchronously
@@ -435,7 +451,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.red,
+                          color: isDarkMode(context)
+                              ? Colors.red[900]
+                              : Colors.red,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Center(

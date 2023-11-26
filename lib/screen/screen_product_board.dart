@@ -532,11 +532,6 @@ class _ProductBoardState extends State<ProductBoard> {
                                                       ),
                                                     )
                                                   : Container(),
-                                              // child: Container(
-                                              //   color: Colors.black,
-                                              //   width: width * 0.17,
-                                              //   height: width * 0.17,
-                                              // ),
                                             ),
                                           ],
                                         ),
@@ -552,13 +547,6 @@ class _ProductBoardState extends State<ProductBoard> {
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold),
                                 ),
-                                // child: IconButton(
-                                //     onPressed: () async {
-                                //       print(title);
-                                //       await getDocumentData(title);
-                                //       setState(() {});
-                                //     },
-                                //     icon: const Icon(Icons.abc)),
                               ),
                       ),
                     );

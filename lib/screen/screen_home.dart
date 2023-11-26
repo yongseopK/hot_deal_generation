@@ -2,18 +2,23 @@
 // ignore_for_file: avoid_print, use_build_context_synchronously, prefer_final_fields
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:hot_deal_generation/device_info.dart';
 import 'package:hot_deal_generation/main.dart';
 import 'package:hot_deal_generation/screen/screen_board.dart';
 import 'package:hot_deal_generation/screen/screen_category.dart';
-import 'package:hot_deal_generation/screen/screen_chatting.dart';
 import 'package:hot_deal_generation/screen/screen_community.dart';
+import 'package:hot_deal_generation/screen/screen_good_deal_list.dart';
 import 'package:hot_deal_generation/screen/screen_login.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/screen/screen_qna.dart';
 import 'package:hot_deal_generation/theme_provider.dart';
+import 'package:open_mail_app/open_mail_app.dart';
 import 'package:provider/provider.dart';
+import 'dart:io' show Platform;
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onThemeChanged; // Callback function
@@ -175,14 +180,29 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Icons.thumb_up_alt_rounded,
                                   color: Colors.grey,
                                 ),
-                                title: const Text("Good-Deal List"),
+                                title: const Text(
+                                  "굿딜 목록",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 onTap: () {
-                                  print("찜목록임");
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (BuildContext context) =>
+                                            const GoodDealListScreen()),
+                                  );
                                 },
                               )
                             : Container(),
                         SwitchListTile(
-                          title: const Text("Dark Mode"),
+                          title: const Text(
+                            "다크모드",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           secondary:
                               const Icon(Icons.dark_mode, color: Colors.grey),
                           value: themeProvider.currentTheme == ThemeMode.dark,
@@ -217,15 +237,51 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Icons.person,
                                   color: Colors.grey,
                                 ),
-                                title: const Text("Inquiry"),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (BuildContext context) =>
-                                          const ChatScreen(),
-                                    ),
+                                title: const Text(
+                                  "이메일 문의",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                onTap: () async {
+                                  String body = await getEmailBody();
+
+                                  final Email email = Email(
+                                    body: body,
+                                    subject: '[핫딜시대 문의]',
+                                    recipients: ['kk0@kakao.com'],
+                                    cc: [],
+                                    bcc: [],
+                                    attachmentPaths: [],
+                                    isHTML: false,
                                   );
+
+                                  try {
+                                    await FlutterEmailSender.send(email);
+                                  } catch (e) {
+                                    String title =
+                                        "기본 메일 앱을 사용할 수 없기 때문에 앱에서 바로 문의를\n\n아래 이메일로 문의주시면 친절하게 답변드리겠습니다.\n\nkk0@kakao.com";
+                                    String message = "";
+                                    showCupertinoDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return CupertinoAlertDialog(
+                                          title: Text(title),
+                                          content: Text(message),
+                                          actions: [
+                                            CupertinoDialogAction(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text(
+                                                "확인",
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  }
                                 },
                               )
                             : Container(),
@@ -235,7 +291,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Icons.logout,
                                   color: Colors.grey,
                                 ),
-                                title: const Text("Logout"),
+                                title: const Text(
+                                  "로그아웃",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 onTap: () async {
                                   await FirebaseAuth.instance.signOut();
                                   Navigator.of(context).pop();
@@ -246,7 +307,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Icons.login,
                                   color: Colors.grey,
                                 ),
-                                title: const Text("Login"),
+                                title: const Text(
+                                  "로그인",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 onTap: () async {
                                   await FirebaseAuth.instance.signOut();
                                   Navigator.push(
