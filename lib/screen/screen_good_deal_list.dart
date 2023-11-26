@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/screen/screen_product_detail.dart';
 import 'package:intl/intl.dart';
 
@@ -209,155 +210,116 @@ class _GoodDealListScreenState extends State<GoodDealListScreen> {
           ? const Center(
               child: CircularProgressIndicator(),
             )
-          : ListView.builder(
-              itemCount: productPlatform.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    print('인덱스 : $index');
-                    if (!isNavigatingToDetail) {
-                      isNavigatingToDetail = true;
-                      _navigateToPostDetail(context, index);
+          : productTitles.isNotEmpty
+              ? ListView.builder(
+                  itemCount: productPlatform.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        print('인덱스 : $index');
+                        if (!isNavigatingToDetail) {
+                          isNavigatingToDetail = true;
+                          _navigateToPostDetail(context, index);
 
-                      Timer(const Duration(seconds: 1), () {
-                        isNavigatingToDetail = false;
-                      });
-                    }
-                  },
-                  child: Card(
-                    margin: const EdgeInsets.all(2.0),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 5, horizontal: 15),
-                      title: Stack(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Timer(const Duration(seconds: 1), () {
+                            isNavigatingToDetail = false;
+                          });
+                        }
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.all(2.0),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 5, horizontal: 15),
+                          title: Stack(
                             children: [
-                              Row(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            '[${productPlatform[index]}]',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: width * 0.01,
+                                          ),
+                                          Text(
+                                            productTitles[index].length +
+                                                        productPlatform[index]
+                                                            .length >
+                                                    16
+                                                ? '${productTitles[index].substring(0, 16 - productPlatform[index].length)}...'
+                                                : productTitles[index],
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(
+                                    height: height * 0.003,
+                                  ),
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
                                       Text(
-                                        '[${productPlatform[index]}]',
+                                        '가격 ',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: isDarkMode(context)
+                                              ? null
+                                              : Colors.grey[500],
+                                        ),
+                                      ),
+                                      Text(
+                                        '₩${currencyFormat.format(int.parse(productPrices[index]))}',
                                         style: const TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.cyan,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 18,
                                         ),
                                       ),
                                       SizedBox(
                                         width: width * 0.01,
                                       ),
                                       Text(
-                                        productTitles[index].length +
-                                                    productPlatform[index]
-                                                        .length >
-                                                16
-                                            ? '${productTitles[index].substring(0, 16 - productPlatform[index].length)}...'
-                                            : productTitles[index],
+                                        '배송비 ',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: isDarkMode(context)
+                                              ? null
+                                              : Colors.grey[500],
+                                        ),
+                                      ),
+                                      Text(
+                                        productDeliveryFees[index] == '0'
+                                            ? "무료"
+                                            : '₩${currencyFormat.format(int.parse((productDeliveryFees[index])))}',
                                         style: const TextStyle(
-                                          fontSize: 18,
+                                          fontSize: 15,
                                         ),
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                              SizedBox(
-                                height: height * 0.003,
-                              ),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '가격 ',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: isDarkMode(context)
-                                          ? null
-                                          : Colors.grey[500],
-                                    ),
-                                  ),
-                                  Text(
-                                    '₩${currencyFormat.format(int.parse(productPrices[index]))}',
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      color: Colors.cyan,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
                                   SizedBox(
-                                    width: width * 0.01,
-                                  ),
-                                  Text(
-                                    '배송비 ',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: isDarkMode(context)
-                                          ? null
-                                          : Colors.grey[500],
-                                    ),
-                                  ),
-                                  Text(
-                                    productDeliveryFees[index] == '0'
-                                        ? "무료"
-                                        : '₩${currencyFormat.format(int.parse((productDeliveryFees[index])))}',
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              SizedBox(
-                                height: height * 0.003,
-                              ),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    productUserName[index],
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: isDarkMode(context)
-                                          ? null
-                                          : Colors.grey[500],
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: width * 0.01,
-                                  ),
-                                  Text(
-                                    productDate[index],
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: isDarkMode(context)
-                                          ? null
-                                          : Colors.grey[500],
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: width * 0.01,
-                                  ),
-                                  Text(
-                                    productTime[index],
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: isDarkMode(context)
-                                          ? null
-                                          : Colors.grey[500],
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: width * 0.03,
+                                    height: height * 0.003,
                                   ),
                                   Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
-                                      Icon(
-                                        Icons.remove_red_eye_outlined,
-                                        size: height * 0.02,
-                                      ),
                                       Text(
-                                        productViewCount[index],
+                                        productUserName[index],
                                         style: TextStyle(
                                           fontSize: 15,
                                           color: isDarkMode(context)
@@ -365,19 +327,11 @@ class _GoodDealListScreenState extends State<GoodDealListScreen> {
                                               : Colors.grey[500],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    width: width * 0.02,
-                                  ),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        CupertinoIcons.chat_bubble_2,
-                                        size: height * 0.02,
+                                      SizedBox(
+                                        width: width * 0.01,
                                       ),
                                       Text(
-                                        productCommentCount[index],
+                                        productDate[index],
                                         style: TextStyle(
                                           fontSize: 15,
                                           color: isDarkMode(context)
@@ -385,46 +339,118 @@ class _GoodDealListScreenState extends State<GoodDealListScreen> {
                                               : Colors.grey[500],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    width: width * 0.02,
-                                  ),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.thumb_up_alt_outlined,
-                                        size: height * 0.02,
+                                      SizedBox(
+                                        width: width * 0.01,
                                       ),
-                                      Text(productRecomendCount[index]),
+                                      Text(
+                                        productTime[index],
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: isDarkMode(context)
+                                              ? null
+                                              : Colors.grey[500],
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: width * 0.03,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.remove_red_eye_outlined,
+                                            size: height * 0.02,
+                                          ),
+                                          Text(
+                                            productViewCount[index],
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              color: isDarkMode(context)
+                                                  ? null
+                                                  : Colors.grey[500],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        width: width * 0.02,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            CupertinoIcons.chat_bubble_2,
+                                            size: height * 0.02,
+                                          ),
+                                          Text(
+                                            productCommentCount[index],
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              color: isDarkMode(context)
+                                                  ? null
+                                                  : Colors.grey[500],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        width: width * 0.02,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.thumb_up_alt_outlined,
+                                            size: height * 0.02,
+                                          ),
+                                          Text(
+                                            productRecomendCount[index],
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              color: isDarkMode(context)
+                                                  ? null
+                                                  : Colors.grey[500],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ],
                                   ),
                                 ],
+                              ),
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: productThumbnails[index].isNotEmpty
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network(
+                                          productThumbnails[index],
+                                          fit: BoxFit.fitHeight,
+                                          width: width * 0.165,
+                                          height: width * 0.165,
+                                        ),
+                                      )
+                                    : ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.asset(
+                                          'images/no_img.jpg',
+                                          fit: BoxFit.fitHeight,
+                                          width: width * 0.165,
+                                          height: width * 0.165,
+                                        ),
+                                      ),
                               ),
                             ],
                           ),
-                          Positioned(
-                            top: 0,
-                            right: 0,
-                            child: productThumbnails[index].isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.network(
-                                      productThumbnails[index],
-                                      fit: BoxFit.fitHeight,
-                                      width: width * 0.165,
-                                      height: width * 0.165,
-                                    ),
-                                  )
-                                : Container(),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                    );
+                  },
+                )
+              : Center(
+                  child: Text(
+                    "굿딜 목록이 비어있습니다!",
+                    style: GoogleFonts.doHyeon(fontSize: 30),
                   ),
-                );
-              },
-            ),
+                ),
     );
   }
 }

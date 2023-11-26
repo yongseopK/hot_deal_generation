@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/screen/screen_add_product.dart';
 import 'package:hot_deal_generation/screen/screen_product_detail.dart';
 import 'package:intl/intl.dart';
@@ -241,7 +242,12 @@ class _ProductBoardState extends State<ProductBoard> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         elevation: 0.0,
-        title: title != null ? Text(title) : null,
+        title: title != null
+            ? Text(
+                title,
+                style: GoogleFonts.doHyeon(fontSize: 25),
+              )
+            : null,
       ),
       body: isLoading
           ? const Center(
@@ -540,12 +546,10 @@ class _ProductBoardState extends State<ProductBoard> {
                                   );
                                 },
                               )
-                            : const Center(
+                            : Center(
                                 child: Text(
                                   '게시물이 없습니다.',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
+                                  style: GoogleFonts.doHyeon(fontSize: 25),
                                 ),
                               ),
                       ),

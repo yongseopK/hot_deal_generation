@@ -82,12 +82,17 @@ class _PostDetailPageState extends State<PostDetailPage> {
     super.dispose();
   }
 
+  bool isLogin = false;
+
   void getCurrentUser() {
     try {
       final user = _authentication.currentUser;
       if (user != null) {
         loggedUser = user;
         print(loggedUser!.email);
+        setState(() {
+          isLogin = true;
+        });
       }
     } catch (e) {
       print(e);
@@ -217,62 +222,13 @@ class _PostDetailPageState extends State<PostDetailPage> {
         commentText = "";
 
         setState(() {});
+      } else {
+        print("로그인 해야함");
       }
     } on FirebaseException catch (e) {
       print(e);
     }
   }
-
-  // void removePost() async {
-  //   // 현재 사용자 정보 불러오기
-  //   final user = FirebaseAuth.instance.currentUser;
-  //   final userData = await FirebaseFirestore.instance
-  //       .collection('user')
-  //       .doc(user!.uid)
-  //       .get();
-
-  //   Map<String, dynamic> userDataMap = userData.data() as Map<String, dynamic>;
-  //   String currentUserName = userDataMap['userName'];
-
-  //   try {
-  //     if (currentUserName == userName) {
-  //       CollectionReference subCollectionRef = FirebaseFirestore.instance
-  //           .collection('BulletinBoard')
-  //           .doc(documentId)
-  //           .collection('comments');
-
-  //       QuerySnapshot subCollectionSnapshot = await subCollectionRef.get();
-
-  //       for (QueryDocumentSnapshot doc in subCollectionSnapshot.docs) {
-  //         await subCollectionRef.doc(doc.id).delete();
-  //       }
-
-  //       await FirebaseFirestore.instance
-  //           .collection('BulletinBoard')
-  //           .doc(documentId)
-  //           .delete()
-  //           .then((value) {
-  //         Fluttertoast.showToast(
-  //           msg: '삭제가 완료됐습니다.',
-  //           toastLength: Toast.LENGTH_LONG,
-  //           gravity: ToastGravity.CENTER,
-  //         );
-  //         Navigator.pop(context, result);
-  //       }).catchError((error) {
-  //         print(error);
-  //       });
-  //     } else {
-  //       Fluttertoast.showToast(
-  //         msg: "본인의 게시물만 삭제할 수 있습니다.",
-  //         toastLength: Toast.LENGTH_LONG,
-  //         gravity: ToastGravity.BOTTOM,
-  //         backgroundColor: Colors.red,
-  //       );
-  //     }
-  //   } on FirebaseException catch (e) {
-  //     print(e);
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -283,10 +239,14 @@ class _PostDetailPageState extends State<PostDetailPage> {
       onWillPop: () async => false,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(title),
-          actions: [
-            PopupMenuButton(
-                itemBuilder: (context) => [
+          title: Text(
+            title,
+            style: GoogleFonts.doHyeon(fontSize: 23),
+          ),
+          actions: loggedUser != null
+              ? [
+                  PopupMenuButton(
+                    itemBuilder: (context) => [
                       PopupMenuItem(
                         child: Text(
                           '게시물 삭제',
@@ -297,17 +257,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
                               documentId, result, 'BulletinBoard');
                         },
                       ),
-                      const PopupMenuItem(
-                        child: Text('Item1'),
-                      ),
-                      const PopupMenuItem(
-                        child: Text('Item1'),
-                      ),
-                      const PopupMenuItem(
-                        child: Text('Item1'),
-                      ),
-                    ]),
-          ],
+                    ],
+                  ),
+                ]
+              : [],
           elevation: 0.0,
           backgroundColor: Colors.black,
           leading: IconButton(
@@ -671,7 +624,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 ),
               ),
               commentFormField(
-                  loggedUser: loggedUser!,
+                  isLogin: isLogin,
+                  loggedUser: loggedUser,
                   widget: widget,
                   documentId: documentId,
                   getCommentData: () => getCommentData(),

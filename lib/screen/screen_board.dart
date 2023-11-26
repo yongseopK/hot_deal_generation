@@ -3,6 +3,7 @@
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,6 +21,21 @@ class BoardScreen extends StatefulWidget {
 }
 
 class _BoardScreenState extends State<BoardScreen> {
+  final user = FirebaseAuth.instance.currentUser;
+  final _authentication = FirebaseAuth.instance;
+  User? loggedUser;
+
+  void getCurrentUser() {
+    final user = _authentication.currentUser;
+    try {
+      if (user != null) {
+        loggedUser = user;
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
   final NumberFormat currencyFormat = NumberFormat("#,##0", "en_US");
 
   List<String> recommendTitle = [];
@@ -112,7 +128,7 @@ class _BoardScreenState extends State<BoardScreen> {
   void initState() {
     super.initState();
     loadDataInBackground();
-    print(productImages);
+    getCurrentUser();
   }
 
   bool isLoading = true;
@@ -150,14 +166,14 @@ class _BoardScreenState extends State<BoardScreen> {
       DocumentSnapshot documentSnapshot = await documentReference.get();
 
       if (documentSnapshot.exists) {
-        print("여기 문제인가");
-
         // 현재 조회수를 가져와서 1 증가시킵니다.
         int currentViewCount = documentSnapshot.get('viewCount') ?? 0;
         int newViewCount = currentViewCount + 1;
 
         // Firestore에 업데이트된 조회수를 저장합니다.
-        await documentReference.update({'viewCount': newViewCount});
+        if (loggedUser != null) {
+          await documentReference.update({'viewCount': newViewCount});
+        }
 
         // 게시물 상세 화면으로 이동합니다.
         Navigator.of(context)
@@ -473,12 +489,26 @@ class _BoardScreenState extends State<BoardScreen> {
                                                               fit: BoxFit
                                                                   .fitHeight,
                                                               width:
-                                                                  width * 0.15,
+                                                                  width * 0.14,
                                                               height:
-                                                                  width * 0.15,
+                                                                  width * 0.14,
                                                             ),
                                                           )
-                                                        : Container(),
+                                                        : ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10),
+                                                            child: Image.asset(
+                                                              'images/no_img.jpg',
+                                                              fit: BoxFit
+                                                                  .fitHeight,
+                                                              width:
+                                                                  width * 0.14,
+                                                              height:
+                                                                  width * 0.14,
+                                                            ),
+                                                          ),
                                                   ),
                                                 ],
                                               ),

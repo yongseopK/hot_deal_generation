@@ -131,7 +131,6 @@ class _CommunityScreenState extends State<CommunityScreen> {
       final user = _authentication.currentUser;
       if (user != null) {
         loggedUser = user;
-        print(loggedUser!.email);
       }
     } catch (e) {
       print(e);

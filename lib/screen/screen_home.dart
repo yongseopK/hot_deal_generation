@@ -16,9 +16,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/screen/screen_qna.dart';
 import 'package:hot_deal_generation/theme_provider.dart';
-import 'package:open_mail_app/open_mail_app.dart';
 import 'package:provider/provider.dart';
-import 'dart:io' show Platform;
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onThemeChanged; // Callback function
@@ -97,6 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int _selectedIndex = 0;
 
+  bool isLogin = false;
+
   @override
   void dispose() {
     // 자원 정리 또는 상태 변경 등을 수행
@@ -147,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   builder: (context, themeProvider, child) {
                     // 여기서 ThemeProvider에 액세스
                     return ListView(
+                      physics: const NeverScrollableScrollPhysics(),
                       padding: EdgeInsets.zero,
                       children: [
                         UserAccountsDrawerHeader(
@@ -157,24 +158,29 @@ class _HomeScreenState extends State<HomeScreen> {
                               bottomRight: Radius.circular(20.0),
                             ),
                           ),
-                          accountName: currentUserName != ''
-                              ? Text(currentUserName)
-                              : const Text(
+                          accountName: isLogin
+                              ? Text(
+                                  currentUserName,
+                                  style: GoogleFonts.doHyeon(fontSize: 20),
+                                )
+                              : Text(
                                   "로그인을 해주세요",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                  ),
+                                  style: GoogleFonts.doHyeon(fontSize: 25),
                                 ),
-                          accountEmail:
-                              currentEmail != '' ? Text(currentEmail) : null,
-                          currentAccountPicture: currentUserImage != ''
+                          accountEmail: isLogin
+                              ? Text(
+                                  currentEmail,
+                                  style: GoogleFonts.doHyeon(fontSize: 15),
+                                )
+                              : null,
+                          currentAccountPicture: isLogin
                               ? CircleAvatar(
                                   backgroundImage:
                                       NetworkImage(currentUserImage),
                                 )
                               : null,
                         ),
-                        currentEmail != ''
+                        isLogin
                             ? ListTile(
                                 leading: const Icon(
                                   Icons.thumb_up_alt_rounded,
@@ -231,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           },
                         ),
-                        loggedUser != null
+                        isLogin
                             ? ListTile(
                                 leading: const Icon(
                                   Icons.person,
@@ -299,6 +305,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 onTap: () async {
                                   await FirebaseAuth.instance.signOut();
+                                  setState(() {
+                                    isLogin = false;
+                                  });
                                   Navigator.of(context).pop();
                                 },
                               )
@@ -314,7 +323,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 onTap: () async {
-                                  await FirebaseAuth.instance.signOut();
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -322,12 +330,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                             const Authentication()),
                                   ).then((result) async {
                                     if (result == "1") {
+                                      isLogin = true;
                                       await getCurrentUserInfo();
-                                      setState(() {});
                                     }
                                   });
                                 },
                               ),
+                        ListTile(
+                          leading: const Icon(Icons.abc),
+                          title: const Text("테스트"),
+                          onTap: () {
+                            print(isLogin);
+                          },
+                        )
                       ],
                     );
                   },

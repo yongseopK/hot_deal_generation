@@ -4,12 +4,14 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
+import 'dart:io' show Platform;
 
 Widget commentFormField({
-  required User loggedUser,
+  required User? loggedUser,
   required dynamic widget,
   required String documentId,
   required Function() getCommentData,
@@ -22,6 +24,7 @@ Widget commentFormField({
   required double height,
   required bool isButtonDisabled,
   required Function() enableButton,
+  required bool isLogin,
 }) {
   void addComment() async {
     final currentDocument = FirebaseFirestore.instance
@@ -103,11 +106,11 @@ Widget commentFormField({
                   maxLines: null,
                   textInputAction: TextInputAction.newline,
                   decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: loggedUser != null
-                        ? "내용을 입력해주세요"
-                        : "로그인 후 댓글 이용이 가능합니다.",
-                  ),
+                      border: InputBorder.none,
+                      hintText: loggedUser != null
+                          ? "내용을 입력해주세요"
+                          : "로그인 후 댓글 이용이 가능합니다.",
+                      hintStyle: const TextStyle(fontSize: 15)),
                 ),
               ),
             ),
@@ -115,40 +118,46 @@ Widget commentFormField({
           const SizedBox(
             width: 10,
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          IgnorePointer(
+            ignoring: loggedUser == null ? true : false,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
-            onPressed: () {
-              if (isButtonDisabled) {
-                return;
-              }
-              if (commentText.length >= 3) {
-                setStateCallback(() {
-                  isButtonDisabled = true;
-                });
-                addComment();
+              onPressed: () {
+                if (isButtonDisabled) {
+                  return;
+                }
 
-                Timer(const Duration(seconds: 1), enableButton);
-                FocusScope.of(context).requestFocus(FocusNode());
-              } else {
-                Fluttertoast.showToast(
-                  msg: "3글자 이상 입력해주세요",
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 2,
-                );
-              }
-            },
-            child: SizedBox(
-              height: height * 0.1,
-              child: const Align(
-                alignment: Alignment.center,
-                child: Text(
-                  '댓글 등록',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                if (loggedUser == null) return;
+
+                if (commentText.length >= 3) {
+                  setStateCallback(() {
+                    isButtonDisabled = true;
+                  });
+                  addComment();
+
+                  Timer(const Duration(seconds: 1), enableButton);
+                  FocusScope.of(context).requestFocus(FocusNode());
+                } else {
+                  Fluttertoast.showToast(
+                    msg: "3글자 이상 입력해주세요",
+                    gravity: ToastGravity.BOTTOM,
+                    timeInSecForIosWeb: 2,
+                  );
+                }
+              },
+              child: SizedBox(
+                height: height * 0.1,
+                child: const Align(
+                  alignment: Alignment.center,
+                  child: Text(
+                    '댓글 등록',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ),
@@ -173,6 +182,34 @@ Widget showComment({
   required List<String> dateTimeArr,
   required String collectionName,
 }) {
+  String currentUserName;
+  void removeComment(
+      CollectionReference<Object?> subCollection, String documentIdToDelete) {
+    subCollection.doc(documentIdToDelete).delete().then((value) async {
+      Fluttertoast.showToast(
+        msg: '댓글이 삭제됐습니다.',
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.black,
+      );
+      await getCommentData();
+
+      DocumentReference documentReference =
+          FirebaseFirestore.instance.collection(collectionName).doc(documentId);
+      DocumentSnapshot documentSnapshot = await documentReference.get();
+
+      int commentCount = documentSnapshot.get('commentCount');
+      int newCommentCount = commentCount - 1;
+
+      await documentReference.update({'commentCount': newCommentCount});
+
+      setStateCallback(() {});
+    }).catchError((error) {
+      print('문서 삭제 실패 : $error');
+    });
+    Navigator.of(context).pop();
+  }
+
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
     child: commentArr.isNotEmpty
@@ -214,20 +251,24 @@ Widget showComment({
                                   String documentIdToDelete =
                                       commentDocIds[index];
                                   try {
-                                    final user =
-                                        FirebaseAuth.instance.currentUser;
-                                    final currentUserData =
-                                        await FirebaseFirestore.instance
-                                            .collection('user')
-                                            .doc(user!.uid)
-                                            .get();
+                                    if (FirebaseAuth.instance.currentUser !=
+                                        null) {
+                                      final user =
+                                          FirebaseAuth.instance.currentUser;
+                                      final currentUserData =
+                                          await FirebaseFirestore.instance
+                                              .collection('user')
+                                              .doc(user!.uid)
+                                              .get();
 
-                                    Map<String, dynamic> userDataMap =
-                                        currentUserData.data()
-                                            as Map<String, dynamic>;
+                                      Map<String, dynamic> userDataMap =
+                                          currentUserData.data()
+                                              as Map<String, dynamic>;
 
-                                    String currentUserName =
-                                        userDataMap['userName'];
+                                      currentUserName = userDataMap['userName'];
+                                    } else {
+                                      currentUserName = "guest";
+                                    }
 
                                     CollectionReference mainCollection =
                                         FirebaseFirestore.instance
@@ -254,134 +295,126 @@ Widget showComment({
 
                                         if (currentUserName ==
                                             commentUserName) {
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return Dialog(
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10.0),
-                                                ),
-                                                child: Container(
-                                                  padding: const EdgeInsets.all(
-                                                      16.0),
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: <Widget>[
-                                                      const Text(
-                                                        '안내',
-                                                        style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 19,
-                                                        ),
-                                                      ),
-                                                      SizedBox(
-                                                        height: height * 0.03,
-                                                      ),
-                                                      const Text(
-                                                        '댓글을 삭제하시겠습니까?',
-                                                        style: TextStyle(
-                                                            fontSize: 17),
-                                                      ),
-                                                      const SizedBox(
-                                                          height: 16),
-                                                      Row(
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .end,
-                                                        children: [
-                                                          TextButton(
-                                                            onPressed: () {
-                                                              subCollection
-                                                                  .doc(
-                                                                      documentIdToDelete)
-                                                                  .delete()
-                                                                  .then(
-                                                                      (value) async {
-                                                                Fluttertoast
-                                                                    .showToast(
-                                                                  msg:
-                                                                      '댓글이 삭제됐습니다.',
-                                                                  toastLength: Toast
-                                                                      .LENGTH_LONG,
-                                                                  gravity:
-                                                                      ToastGravity
-                                                                          .BOTTOM,
-                                                                  backgroundColor:
-                                                                      Colors
-                                                                          .black,
-                                                                );
-                                                                await getCommentData();
-
-                                                                DocumentReference
-                                                                    documentReference =
-                                                                    FirebaseFirestore
-                                                                        .instance
-                                                                        .collection(
-                                                                            collectionName)
-                                                                        .doc(
-                                                                            documentId);
-                                                                DocumentSnapshot
-                                                                    documentSnapshot =
-                                                                    await documentReference
-                                                                        .get();
-
-                                                                int commentCount =
-                                                                    documentSnapshot
-                                                                        .get(
-                                                                            'commentCount');
-                                                                int newCommentCount =
-                                                                    commentCount -
-                                                                        1;
-
-                                                                await documentReference
-                                                                    .update({
-                                                                  'commentCount':
-                                                                      newCommentCount
-                                                                });
-
-                                                                setStateCallback(
-                                                                    () {});
-                                                              }).catchError(
-                                                                      (error) {
-                                                                print(
-                                                                    '문서 삭제 실패 : $error');
-                                                              });
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pop();
-                                                            },
-                                                            child: const Text(
-                                                              '삭제',
-                                                              style: TextStyle(
-                                                                color:
-                                                                    Colors.red,
-                                                              ),
+                                          Platform.isIOS
+                                              ? showCupertinoDialog(
+                                                  context: context,
+                                                  builder: (context) {
+                                                    return CupertinoAlertDialog(
+                                                      title: const Text("안내"),
+                                                      content: const Text(
+                                                          "댓글을 삭제하시겠습니까?"),
+                                                      actions: [
+                                                        CupertinoDialogAction(
+                                                          onPressed: () {
+                                                            removeComment(
+                                                                subCollection,
+                                                                documentIdToDelete);
+                                                          },
+                                                          child: const Text(
+                                                            "삭제",
+                                                            style: TextStyle(
+                                                              color: Colors.red,
                                                             ),
                                                           ),
-                                                          TextButton(
-                                                            onPressed: () {
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pop();
-                                                            },
-                                                            child: const Text(
-                                                                '닫기'),
-                                                          ),
-                                                        ],
+                                                        ),
+                                                        CupertinoDialogAction(
+                                                          isDefaultAction: true,
+                                                          onPressed: () {
+                                                            Navigator.pop(
+                                                                context);
+                                                          },
+                                                          child:
+                                                              const Text("닫기"),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                )
+                                              : showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return Dialog(
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                          10.0,
+                                                        ),
                                                       ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          );
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(16.0),
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          mainAxisSize:
+                                                              MainAxisSize.min,
+                                                          children: <Widget>[
+                                                            const Text(
+                                                              '안내',
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                                fontSize: 19,
+                                                              ),
+                                                            ),
+                                                            SizedBox(
+                                                              height:
+                                                                  height * 0.03,
+                                                            ),
+                                                            const Text(
+                                                              '댓글을 삭제하시겠습니까?',
+                                                              style: TextStyle(
+                                                                  fontSize: 17),
+                                                            ),
+                                                            const SizedBox(
+                                                                height: 16),
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .end,
+                                                              children: [
+                                                                TextButton(
+                                                                  onPressed:
+                                                                      () {
+                                                                    removeComment(
+                                                                        subCollection,
+                                                                        documentIdToDelete);
+                                                                  },
+                                                                  child:
+                                                                      const Text(
+                                                                    '삭제',
+                                                                    style:
+                                                                        TextStyle(
+                                                                      color: Colors
+                                                                          .red,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                TextButton(
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .pop();
+                                                                  },
+                                                                  child:
+                                                                      const Text(
+                                                                          '닫기'),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                );
                                         } else {
                                           Fluttertoast.showToast(
                                             msg: "본인이 작성한 댓글만 삭제할 수 있습니다.",

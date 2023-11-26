@@ -109,10 +109,10 @@ Future showRemovePostDialog(
                         TextButton(
                           onPressed: () async {
                             removePost(userName, documentId, context, result,
-                                'BulletinBoard');
+                                collectionName);
                             await Future.delayed(
                                 const Duration(milliseconds: 300));
-                            Navigator.pop(context);
+                            Navigator.of(context).pop();
                           },
                           child: const Text(
                             '삭제',
@@ -145,7 +145,7 @@ Future showRemovePostDialog(
                 CupertinoDialogAction(
                   onPressed: () {
                     removePost(
-                        userName, documentId, context, result, 'BulletinBoard');
+                        userName, documentId, context, result, collectionName);
                   },
                   child: const Text(
                     "삭제",

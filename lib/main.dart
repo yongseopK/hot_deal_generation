@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:hot_deal_generation/firebase_options.dart';
 import 'package:hot_deal_generation/screen/screen_home.dart';
@@ -18,11 +19,9 @@ void main() async {
         create: (_) => ThemeProvider(),
         child: Builder(
           builder: (BuildContext context) {
-            ThemeProvider themeProvider = Provider.of<ThemeProvider>(context);
+            // ThemeProvider themeProvider = Provider.of<ThemeProvider>(context);
 
-            // Define the callback function
             onChangedTheme() {
-              // You can add logic here to handle theme change
               print("Theme Changed!");
             }
 
@@ -46,6 +45,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     return ChangeNotifierProvider.value(
       value: Provider.of<ThemeProvider>(context),
       child: ValueListenableBuilder(

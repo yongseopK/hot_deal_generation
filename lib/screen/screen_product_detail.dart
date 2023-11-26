@@ -9,14 +9,11 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/functions/image_save.dart';
+import 'package:hot_deal_generation/functions/post_func.dart';
 import 'package:hot_deal_generation/widget/widget_comment.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:io' show File, Platform;
-import 'dart:typed_data';
-import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
+import 'dart:io' show Platform;
 
 class ProductDetail extends StatefulWidget {
   const ProductDetail({Key? key, required this.documentId}) : super(key: key);
@@ -40,6 +37,8 @@ class _ProductDetailState extends State<ProductDetail> {
   String nonHttp = "https://";
 
   bool isButtonDisabled = false;
+
+  bool isLogin = false;
 
   TextEditingController commentTextController = TextEditingController();
   void enableButton() {
@@ -95,6 +94,10 @@ class _ProductDetailState extends State<ProductDetail> {
       final user = _authentication.currentUser;
       if (user != null) {
         loggedUser = user;
+        setState(() {
+          isLogin = true;
+        });
+
         print(loggedUser!.email);
       }
     } catch (e) {
@@ -128,7 +131,6 @@ class _ProductDetailState extends State<ProductDetail> {
 
     for (QueryDocumentSnapshot document in snapshot.docs) {
       Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-
       commentArr.add(data['comment']);
       commentDocIds.add(document.id);
       userNameArr.add(data['userName']);
@@ -140,56 +142,6 @@ class _ProductDetailState extends State<ProductDetail> {
     numberOfDocument = snapshot.size;
 
     print("문서 개수 : $numberOfDocument");
-  }
-
-  void addComment() async {
-    final currentDocument =
-        FirebaseFirestore.instance.collection('Product').doc(widget.documentId);
-
-    DocumentReference documentReference =
-        FirebaseFirestore.instance.collection('Product').doc(documentId);
-    DocumentSnapshot documentSnapshot = await documentReference.get();
-
-    try {
-      if (loggedUser != null) {
-        final user = FirebaseAuth.instance.currentUser;
-        final userData = await FirebaseFirestore.instance
-            .collection('user')
-            .doc(user!.uid)
-            .get();
-
-        Map<String, dynamic> userDataMap =
-            userData.data() as Map<String, dynamic>;
-        String currentUserName = userDataMap['userName'];
-
-        DateTime dt = DateTime.now();
-
-        String dateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(dt);
-
-        final commentData = {
-          'userName': currentUserName,
-          'comment': commentText,
-          'dateTime': dateTime
-        };
-
-        await currentDocument.collection('comments').add(commentData);
-
-        int commentCount = documentSnapshot.get('commentCount');
-        int newCommentCount = commentCount + 1;
-
-        await documentReference.update({'commentCount': newCommentCount});
-        print('댓글 개수 : $commentCount');
-
-        await getCommentData();
-
-        commentTextController.clear();
-        commentText = "";
-
-        setState(() {});
-      }
-    } on FirebaseException catch (e) {
-      print(e);
-    }
   }
 
   Future<void> getPostDetails() async {
@@ -233,57 +185,6 @@ class _ProductDetailState extends State<ProductDetail> {
     }
   }
 
-  void removePost() async {
-    // 현재 사용자 정보 불러오기
-    final user = FirebaseAuth.instance.currentUser;
-    final userData = await FirebaseFirestore.instance
-        .collection('user')
-        .doc(user!.uid)
-        .get();
-
-    Map<String, dynamic> userDataMap = userData.data() as Map<String, dynamic>;
-    String currentUserName = userDataMap['userName'];
-
-    try {
-      if (currentUserName == userName) {
-        CollectionReference subCollectionRef = FirebaseFirestore.instance
-            .collection('Product')
-            .doc(documentId)
-            .collection('comments');
-
-        QuerySnapshot subCollectionSnapshot = await subCollectionRef.get();
-
-        for (QueryDocumentSnapshot doc in subCollectionSnapshot.docs) {
-          await subCollectionRef.doc(doc.id).delete();
-        }
-
-        await FirebaseFirestore.instance
-            .collection('Product')
-            .doc(documentId)
-            .delete()
-            .then((value) {
-          Fluttertoast.showToast(
-            msg: '삭제가 완료됐습니다.',
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.CENTER,
-          );
-          Navigator.pop(context, result);
-        }).catchError((error) {
-          print(error);
-        });
-      } else {
-        Fluttertoast.showToast(
-          msg: "본인의 게시물만 삭제할 수 있습니다.",
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-        );
-      }
-    } on FirebaseException catch (e) {
-      print(e);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -294,127 +195,28 @@ class _ProductDetailState extends State<ProductDetail> {
       onWillPop: () async => false,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(title),
-          actions: [
-            PopupMenuButton(
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  child: Text(
-                    '게시물 삭제',
-                    style: GoogleFonts.nanumGothic(fontSize: 15),
+          title: Text(
+            title,
+            style: GoogleFonts.doHyeon(fontSize: 25),
+          ),
+          actions: loggedUser != null
+              ? [
+                  PopupMenuButton(
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        child: Text(
+                          '게시물 삭제',
+                          style: GoogleFonts.nanumGothic(fontSize: 15),
+                        ),
+                        onTap: () {
+                          showRemovePostDialog(context, height, userName,
+                              documentId, result, 'Product');
+                        },
+                      )
+                    ],
                   ),
-                  onTap: () {
-                    Platform.isAndroid
-                        ? showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return Dialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: <Widget>[
-                                      const Column(
-                                        children: [
-                                          Text(
-                                            '안내',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 19,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: height * 0.03,
-                                      ),
-                                      const Text(
-                                        '게시물을 삭제하시겠습니까?',
-                                        style: TextStyle(fontSize: 17),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        children: [
-                                          TextButton(
-                                            onPressed: () {
-                                              removePost();
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: const Text(
-                                              '삭제',
-                                              style: TextStyle(
-                                                color: Colors.red,
-                                              ),
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: const Text('닫기'),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                        : showCupertinoDialog(
-                            context: context,
-                            builder: (context) {
-                              return CupertinoAlertDialog(
-                                title: const Text("안내"),
-                                content: const Text("게시물을 삭제하시겠습니까?"),
-                                actions: [
-                                  CupertinoDialogAction(
-                                    onPressed: () {
-                                      removePost();
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text(
-                                      "삭제",
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                      ),
-                                    ),
-                                  ),
-                                  CupertinoDialogAction(
-                                    isDefaultAction: true,
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text("닫기"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                  },
-                ),
-                PopupMenuItem(
-                  child: const Text('플랫폼'),
-                  onTap: () {
-                    print(intPrice);
-                  },
-                ),
-                const PopupMenuItem(
-                  child: Text('Item1'),
-                ),
-                const PopupMenuItem(
-                  child: Text('Item1'),
-                ),
-              ],
-            ),
-          ],
+                ]
+              : [],
           elevation: 0.0,
           backgroundColor: Colors.black,
           leading: IconButton(
@@ -798,7 +600,8 @@ class _ProductDetailState extends State<ProductDetail> {
                   ),
                 ),
                 commentFormField(
-                  loggedUser: loggedUser!,
+                  isLogin: isLogin,
+                  loggedUser: loggedUser,
                   widget: widget,
                   documentId: documentId,
                   getCommentData: () => getCommentData(),
