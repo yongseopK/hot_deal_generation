@@ -387,12 +387,16 @@ class _ProductDetailState extends State<ProductDetail> {
                   ),
                 Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      Text(
-                        text,
-                        style: const TextStyle(fontSize: 15),
+                      Flexible(
+                        child: Text(
+                          text,
+                          style: const TextStyle(fontSize: 15),
+                          softWrap: true,
+                        ),
                       ),
                     ],
                   ),

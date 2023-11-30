@@ -22,6 +22,10 @@ class AddPost extends StatefulWidget {
 }
 
 class _AddPostState extends State<AddPost> {
+  bool isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
 
@@ -201,8 +205,7 @@ class _AddPostState extends State<AddPost> {
             children: [
               Text(
                 "글 작성",
-                textAlign: TextAlign.left,
-                style: GoogleFonts.bebasNeue(fontSize: 30.0),
+                style: GoogleFonts.doHyeon(fontSize: 25),
               ),
             ],
           ),
@@ -217,13 +220,16 @@ class _AddPostState extends State<AddPost> {
                     padding: const EdgeInsets.fromLTRB(10, 20, 10, 10),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
+                        color: isDarkMode(context)
+                            ? Colors.grey[800]
+                            : Colors.grey[200],
                         border: Border.all(color: Colors.white),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.only(left: 20.0, right: 20.0),
                         child: TextFormField(
+                          textInputAction: TextInputAction.next,
                           validator: (val) => val == "" ? "제목을 입력해주세요" : null,
                           onSaved: (value) {
                             postTitle = value!;
@@ -244,13 +250,16 @@ class _AddPostState extends State<AddPost> {
                     child: Container(
                       height: height * 0.3,
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
+                        color: isDarkMode(context)
+                            ? Colors.grey[800]
+                            : Colors.grey[200],
                         border: Border.all(color: Colors.white),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.only(left: 20.0, right: 20.0),
                         child: TextFormField(
+                          textInputAction: TextInputAction.next,
                           controller: textController,
                           validator: (val) => val == "" ? "내용을 입력해주세요" : null,
                           onSaved: (value) {
@@ -269,7 +278,6 @@ class _AddPostState extends State<AddPost> {
                             }
                           },
                           maxLines: null,
-                          textInputAction: TextInputAction.newline,
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             hintText: "내용을 입력해주세요",
@@ -432,7 +440,9 @@ class _AddPostState extends State<AddPost> {
                       child: Container(
                         padding: const EdgeInsets.all(15),
                         decoration: BoxDecoration(
-                            color: Colors.blue,
+                            color: isDarkMode(context)
+                                ? Colors.blue[800]
+                                : Colors.blue,
                             borderRadius: BorderRadius.circular(12)),
                         child: const Center(
                           child: Text(

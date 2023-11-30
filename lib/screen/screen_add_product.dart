@@ -11,6 +11,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:modal_progress_hud_nsn/modal_progress_hud_nsn.dart';
@@ -43,6 +44,10 @@ class AddProduct extends StatefulWidget {
 }
 
 class _AddProductState extends State<AddProduct> {
+  bool isDarkMode(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
   final _authentication = FirebaseAuth.instance;
   User? loggedUser;
 
@@ -340,7 +345,12 @@ class _AddProductState extends State<AddProduct> {
         appBar: AppBar(
           elevation: 0.0,
           backgroundColor: Colors.black,
-          title: title != null ? Text("$title 게시물 작성") : const Text("값이 없음"),
+          title: title != null
+              ? Text(
+                  "$title 게시물 작성",
+                  style: GoogleFonts.doHyeon(fontSize: 25),
+                )
+              : const Text("값이 없음"),
         ),
         body: ModalProgressHUD(
           inAsyncCall: showSpinner,
@@ -353,7 +363,9 @@ class _AddProductState extends State<AddProduct> {
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
+                          color: isDarkMode(context)
+                              ? Colors.grey[800]
+                              : Colors.grey[200],
                           border: Border.all(color: Colors.white),
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -388,13 +400,16 @@ class _AddProductState extends State<AddProduct> {
                   padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: isDarkMode(context)
+                          ? Colors.grey[800]
+                          : Colors.grey[200],
                       border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
                       child: TextFormField(
+                        textInputAction: TextInputAction.next,
                         validator: (val) =>
                             val!.trim() == "" ? "제목을 입력해주세요" : null,
                         onSaved: (value) {
@@ -415,13 +430,16 @@ class _AddProductState extends State<AddProduct> {
                   padding: EdgeInsets.fromLTRB(10, 0, width * 0.4, 10),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: isDarkMode(context)
+                          ? Colors.grey[800]
+                          : Colors.grey[200],
                       border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.only(left: 20.0, right: 20.0),
                       child: TextFormField(
+                        textInputAction: TextInputAction.next,
                         keyboardType: TextInputType.number,
                         validator: (val) =>
                             val!.trim() == "" ? "가격을 입력해주세요" : null,
@@ -443,7 +461,9 @@ class _AddProductState extends State<AddProduct> {
                   padding: EdgeInsets.fromLTRB(10, 0, width * 0.4, 10),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: isDarkMode(context)
+                          ? Colors.grey[800]
+                          : Colors.grey[200],
                       border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -470,7 +490,9 @@ class _AddProductState extends State<AddProduct> {
                   child: Container(
                     height: height * 0.2,
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: isDarkMode(context)
+                          ? Colors.grey[800]
+                          : Colors.grey[200],
                       border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -508,7 +530,9 @@ class _AddProductState extends State<AddProduct> {
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: isDarkMode(context)
+                          ? Colors.grey[800]
+                          : Colors.grey[200],
                       border: Border.all(color: Colors.white),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -526,7 +550,7 @@ class _AddProductState extends State<AddProduct> {
                         textInputAction: TextInputAction.newline,
                         decoration: const InputDecoration(
                           border: InputBorder.none,
-                          hintText: "링크를 입력해주세요(https://www 포함)",
+                          hintText: "링크를 입력해주세요 (https://www 포함)",
                         ),
                       ),
                     ),
@@ -602,7 +626,9 @@ class _AddProductState extends State<AddProduct> {
                     child: Container(
                       padding: const EdgeInsets.all(15),
                       decoration: BoxDecoration(
-                          color: Colors.blue,
+                          color: isDarkMode(context)
+                              ? Colors.blue[800]
+                              : Colors.blue,
                           borderRadius: BorderRadius.circular(12)),
                       child: const Center(
                         child: Text(

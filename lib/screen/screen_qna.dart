@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class QnaScreen extends StatefulWidget {
   const QnaScreen({Key? key}) : super(key: key);
@@ -18,7 +19,10 @@ class _QnaScreenState extends State<QnaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Q&A"),
+        title: Text(
+          "Q&A",
+          style: GoogleFonts.doHyeon(fontSize: 25),
+        ),
         backgroundColor: Colors.grey[700],
         elevation: 0.0,
       ),

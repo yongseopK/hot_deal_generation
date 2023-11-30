@@ -202,7 +202,10 @@ class _GoodDealListScreenState extends State<GoodDealListScreen> {
     double height = screenSize.height;
     return Scaffold(
       appBar: AppBar(
-        title: const Text("굿딜목록"),
+        title: Text(
+          "굿딜목록",
+          style: GoogleFonts.doHyeon(fontSize: 25),
+        ),
         elevation: 0.0,
         backgroundColor: Colors.grey[700],
       ),

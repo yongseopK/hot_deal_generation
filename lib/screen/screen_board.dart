@@ -7,9 +7,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import 'package:hot_deal_generation/screen/screen_post_detail.dart';
-// import 'package:google_fonts/google_fonts.dart';
-
 import 'package:hot_deal_generation/screen/screen_product_detail.dart';
 import 'package:intl/intl.dart';
 
@@ -55,6 +52,7 @@ class _BoardScreenState extends State<BoardScreen> {
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('Product')
+          .where('recommendCount', isGreaterThan: 0)
           .orderBy('recommendCount', descending: true)
           .limit(10)
           .get();
@@ -153,7 +151,6 @@ class _BoardScreenState extends State<BoardScreen> {
     DocumentSnapshot document = await FirebaseFirestore.instance
         .collection('Product')
         .orderBy('recommendCount', descending: true)
-        .limit(5)
         .get()
         .then((querySnapshot) => querySnapshot.docs[postIndex]);
 
@@ -251,16 +248,31 @@ class _BoardScreenState extends State<BoardScreen> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 15),
+                                horizontal: 15, vertical: 10),
                             child: Row(
                               children: [
                                 const Icon(
                                   Icons.add_chart_sharp,
                                   size: 28,
                                 ),
-                                Text(
-                                  " 베스트셀러",
-                                  style: GoogleFonts.doHyeon(fontSize: 28),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 15),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "베스트셀러",
+                                        style:
+                                            GoogleFonts.doHyeon(fontSize: 28),
+                                      ),
+                                      Text(
+                                        "* 좋아요가 가장 많은 10개의 게시물이 표시됩니다!",
+                                        style:
+                                            GoogleFonts.doHyeon(fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -517,12 +529,11 @@ class _BoardScreenState extends State<BoardScreen> {
                                         );
                                       },
                                     )
-                                  : const Center(
+                                  : Center(
                                       child: Text(
                                         '게시물이 없습니다.',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
+                                        style:
+                                            GoogleFonts.doHyeon(fontSize: 25),
                                       ),
                                     ),
                             ),

@@ -97,8 +97,8 @@ class _AuthenticationState extends State<Authentication> {
                               child: Padding(
                                 padding: const EdgeInsets.only(left: 20.0),
                                 child: TextFormField(
+                                  textInputAction: TextInputAction.next,
                                   keyboardType: TextInputType.emailAddress,
-                                  // controller: emailController,
                                   validator: (val) =>
                                       val == "" ? "Please enter email" : null,
                                   onSaved: (value) {
@@ -130,7 +130,7 @@ class _AuthenticationState extends State<Authentication> {
                               child: Padding(
                                 padding: const EdgeInsets.only(left: 20.0),
                                 child: TextFormField(
-                                  // controller: passwordController,
+                                  textInputAction: TextInputAction.done,
                                   validator: (val) => val == ""
                                       ? "Please enter password"
                                       : null,

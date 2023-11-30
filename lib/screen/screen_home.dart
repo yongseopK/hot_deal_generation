@@ -55,7 +55,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String currentUserName = '';
   String currentEmail = '';
-  String currentUserImage = '';
 
   Future<void> getCurrentUserInfo() async {
     try {
@@ -69,7 +68,6 @@ class _HomeScreenState extends State<HomeScreen> {
         if (userData.exists) {
           currentUserName = userData.data()!['userName'];
           currentEmail = userData.data()!['email'];
-          currentUserImage = userData.data()!['picked_image'];
         } else {
           print("뭔가 에러가 있는듯?");
         }
@@ -133,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 "Hot-Deal",
                 textAlign: TextAlign.left,
-                style: GoogleFonts.bebasNeue(fontSize: 30.0),
+                style: GoogleFonts.doHyeon(fontSize: 30.0),
               ),
             ],
           ),
@@ -145,7 +143,6 @@ class _HomeScreenState extends State<HomeScreen> {
               if (snapshot.connectionState == ConnectionState.done) {
                 return Consumer<ThemeProvider>(
                   builder: (context, themeProvider, child) {
-                    // 여기서 ThemeProvider에 액세스
                     return ListView(
                       physics: const NeverScrollableScrollPhysics(),
                       padding: EdgeInsets.zero,
@@ -161,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           accountName: isLogin
                               ? Text(
                                   currentUserName,
-                                  style: GoogleFonts.doHyeon(fontSize: 20),
+                                  style: GoogleFonts.doHyeon(fontSize: 25),
                                 )
                               : Text(
                                   "로그인을 해주세요",
@@ -170,13 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           accountEmail: isLogin
                               ? Text(
                                   currentEmail,
-                                  style: GoogleFonts.doHyeon(fontSize: 15),
-                                )
-                              : null,
-                          currentAccountPicture: isLogin
-                              ? CircleAvatar(
-                                  backgroundImage:
-                                      NetworkImage(currentUserImage),
+                                  style: GoogleFonts.doHyeon(fontSize: 20),
                                 )
                               : null,
                         ),
@@ -291,7 +282,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 },
                               )
                             : Container(),
-                        loggedUser != null
+                        isLogin
                             ? ListTile(
                                 leading: const Icon(
                                   Icons.logout,
@@ -336,13 +327,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   });
                                 },
                               ),
-                        ListTile(
-                          leading: const Icon(Icons.abc),
-                          title: const Text("테스트"),
-                          onTap: () {
-                            print(isLogin);
-                          },
-                        )
                       ],
                     );
                   },

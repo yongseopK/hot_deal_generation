@@ -6,17 +6,17 @@
   <component name="ChangeListManager">
     <list default="true" id="146d262b-d0ac-471d-8e0e-57ba2192c286" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/Podfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/ios/Podfile.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screen/screen_add_post.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_add_post.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screen/screen_add_product.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_add_product.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screen/screen_board.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_board.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screen/screen_community.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_community.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screen/screen_good_deal_list.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_good_deal_list.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/screen/screen_home.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_home.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/screen/screen_login.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_login.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/screen/screen_post_detail.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_post_detail.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screen/screen_product_board.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_product_board.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/screen/screen_product_detail.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_product_detail.dart" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/screen/screen_qna.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_qna.dart" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/lib/screen/screen_register.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/screen/screen_register.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/theme_provider.dart" beforeDir="false" afterPath="$PROJECT_DIR$/lib/theme_provider.dart" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/widget/login.button.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/widget/register.button.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/lib/widget/text.form.global.dart" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pubspec.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/pubspec.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

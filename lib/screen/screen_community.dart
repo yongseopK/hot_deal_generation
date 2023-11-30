@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hot_deal_generation/screen/screen_add_post.dart';
 import 'package:hot_deal_generation/screen/screen_post_detail.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -423,12 +424,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
                                         );
                                       },
                                     )
-                                  : const Center(
+                                  : Center(
                                       child: Text(
                                         '게시물이 없습니다.',
-                                        style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold),
+                                        style:
+                                            GoogleFonts.doHyeon(fontSize: 30),
                                       ),
                                     ),
                             ),

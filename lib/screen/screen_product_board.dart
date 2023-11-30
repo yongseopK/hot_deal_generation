@@ -549,7 +549,7 @@ class _ProductBoardState extends State<ProductBoard> {
                             : Center(
                                 child: Text(
                                   '게시물이 없습니다.',
-                                  style: GoogleFonts.doHyeon(fontSize: 25),
+                                  style: GoogleFonts.doHyeon(fontSize: 30),
                                 ),
                               ),
                       ),
