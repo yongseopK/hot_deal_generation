@@ -1,7 +1,7 @@
 핫딜시대(Hot Deal Generation)
 =======
 
-- ### 시발
+- ### 맙소사
 
 <hr>
 
